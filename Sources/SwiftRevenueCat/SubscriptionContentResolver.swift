@@ -6,6 +6,13 @@ enum SubscriptionContentResolver {
 
     private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionContentResolver")
 
+    private static let periodFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.day, .weekOfMonth, .month, .year]
+        formatter.unitsStyle = .full
+        return formatter
+    }()
+
     static func activePlanDisplayName(
         customerInfo: CustomerInfo?,
         offerings: Offerings?
@@ -51,46 +58,13 @@ enum SubscriptionContentResolver {
         guard let period = product.subscriptionPeriod else {
             return SubscriptionL10n.once
         }
-
-        let count = period.value
-        if count == 1 {
-            switch period.unit {
-            case .day:   return SubscriptionL10n.perDay
-            case .week:  return SubscriptionL10n.perWeek
-            case .month: return SubscriptionL10n.perMonth
-            case .year:  return SubscriptionL10n.perYear
-            @unknown default: return ""
-            }
-        } else {
-            switch period.unit {
-            case .day:   return SubscriptionL10n.perDays(count)
-            case .week:  return SubscriptionL10n.perWeeks(count)
-            case .month: return SubscriptionL10n.perMonths(count)
-            case .year:  return SubscriptionL10n.perYears(count)
-            @unknown default: return ""
-            }
-        }
+        let formatted = formatPeriod(period)
+        return "/ \(formatted)"
     }
 
     static func formatPeriod(_ period: SubscriptionPeriod) -> String {
-        let count = period.value
-        if count == 1 {
-            switch period.unit {
-            case .day:   return SubscriptionL10n.oneDay
-            case .week:  return SubscriptionL10n.oneWeek
-            case .month: return SubscriptionL10n.oneMonth
-            case .year:  return SubscriptionL10n.oneYear
-            @unknown default: return ""
-            }
-        } else {
-            switch period.unit {
-            case .day:   return SubscriptionL10n.days(count)
-            case .week:  return SubscriptionL10n.weeks(count)
-            case .month: return SubscriptionL10n.months(count)
-            case .year:  return SubscriptionL10n.years(count)
-            @unknown default: return ""
-            }
-        }
+        let components = periodToDateComponents(period)
+        return periodFormatter.string(from: components) ?? ""
     }
 
     static func buildOfferDescription(
@@ -121,13 +95,7 @@ enum SubscriptionContentResolver {
         annualProduct: StoreProduct,
         allProducts: [StoreProduct]
     ) -> String? {
-        guard let weeklyProduct = allProducts.first(where: { product in
-            if let period = product.subscriptionPeriod,
-               period.unit == .week, period.value == 1 {
-                return true
-            }
-            return false
-        }) else {
+        guard let weeklyProduct = allProducts.first(where: productIsWeekly) else {
             return nil
         }
 
@@ -154,5 +122,23 @@ enum SubscriptionContentResolver {
             return entitlement.productIdentifier
         }
         return info.activeSubscriptions.first
+    }
+
+    private static func productIsWeekly(_ product: StoreProduct) -> Bool {
+        guard let period = product.subscriptionPeriod,
+              period.unit == .week, period.value == 1 else {
+            return false
+        }
+        return true
+    }
+
+    private static func periodToDateComponents(_ period: SubscriptionPeriod) -> DateComponents {
+        switch period.unit {
+        case .day:   return DateComponents(day: period.value)
+        case .week:  return DateComponents(weekOfMonth: period.value)
+        case .month: return DateComponents(month: period.value)
+        case .year:  return DateComponents(year: period.value)
+        @unknown default: return DateComponents()
+        }
     }
 }

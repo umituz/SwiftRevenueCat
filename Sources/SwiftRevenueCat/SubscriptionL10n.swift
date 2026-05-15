@@ -22,76 +22,10 @@ public enum SubscriptionL10n {
         String(localized: "subscription.plan.free", defaultValue: "Free")
     }
 
-    // MARK: - Period Labels (price suffix)
+    // MARK: - Period Labels
 
     public static var once: String {
         String(localized: "subscription.period.once", defaultValue: "once")
-    }
-
-    public static var perDay: String {
-        String(localized: "subscription.period.day", defaultValue: "/ day")
-    }
-
-    public static var perWeek: String {
-        String(localized: "subscription.period.week", defaultValue: "/ week")
-    }
-
-    public static var perMonth: String {
-        String(localized: "subscription.period.month", defaultValue: "/ month")
-    }
-
-    public static var perYear: String {
-        String(localized: "subscription.period.year", defaultValue: "/ year")
-    }
-
-    public static func perDays(_ count: Int) -> String {
-        String(localized: "subscription.period.days", defaultValue: "/ \(count) days")
-    }
-
-    public static func perWeeks(_ count: Int) -> String {
-        String(localized: "subscription.period.weeks", defaultValue: "/ \(count) weeks")
-    }
-
-    public static func perMonths(_ count: Int) -> String {
-        String(localized: "subscription.period.months", defaultValue: "/ \(count) months")
-    }
-
-    public static func perYears(_ count: Int) -> String {
-        String(localized: "subscription.period.years", defaultValue: "/ \(count) years")
-    }
-
-    // MARK: - Period Count Labels (standalone)
-
-    public static var oneDay: String {
-        String(localized: "subscription.period_count.one_day", defaultValue: "1 day")
-    }
-
-    public static var oneWeek: String {
-        String(localized: "subscription.period_count.one_week", defaultValue: "1 week")
-    }
-
-    public static var oneMonth: String {
-        String(localized: "subscription.period_count.one_month", defaultValue: "1 month")
-    }
-
-    public static var oneYear: String {
-        String(localized: "subscription.period_count.one_year", defaultValue: "1 year")
-    }
-
-    public static func days(_ count: Int) -> String {
-        String(localized: "subscription.period_count.days", defaultValue: "\(count) days")
-    }
-
-    public static func weeks(_ count: Int) -> String {
-        String(localized: "subscription.period_count.weeks", defaultValue: "\(count) weeks")
-    }
-
-    public static func months(_ count: Int) -> String {
-        String(localized: "subscription.period_count.months", defaultValue: "\(count) months")
-    }
-
-    public static func years(_ count: Int) -> String {
-        String(localized: "subscription.period_count.years", defaultValue: "\(count) years")
     }
 
     // MARK: - Savings
