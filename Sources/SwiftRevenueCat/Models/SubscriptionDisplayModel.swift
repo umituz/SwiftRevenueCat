@@ -1,6 +1,6 @@
 import Foundation
 
-public struct SubscriptionDisplayModel: Equatable {
+public struct SubscriptionDisplayModel: Equatable, Sendable {
     public let isPro: Bool
     public let isLifetime: Bool
     public let planName: String
@@ -36,7 +36,7 @@ public struct SubscriptionDisplayModel: Equatable {
     public static let empty = SubscriptionDisplayModel(
         isPro: false,
         isLifetime: false,
-        planName: "Free",
+        planName: SubscriptionL10n.freePlan,
         priceText: "",
         expirationDate: nil,
         purchaseDate: nil,

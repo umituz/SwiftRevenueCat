@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PermissionResult {
+public struct PermissionResult: Sendable {
     public let allowed: Bool
     public let error: PermissionError?
 
@@ -12,18 +12,18 @@ public struct PermissionResult {
     public var isAllowed: Bool { allowed }
 }
 
-public enum PermissionError: LocalizedError {
+public enum PermissionError: LocalizedError, Sendable {
     case freeLimitReached(current: Int, limit: Int, type: String)
 
     public var errorDescription: String? {
         switch self {
         case .freeLimitReached(let current, let limit, let type):
-            return "\(current)/\(limit) \(type) limit reached. Upgrade to Pro for unlimited."
+            return SubscriptionL10n.freeLimitReached(current: current, limit: limit, type: type)
         }
     }
 }
 
-public struct ProjectLimitInfo {
+public struct ProjectLimitInfo: Sendable {
     public let currentCount: Int
     public let limit: Int
     public let isPro: Bool

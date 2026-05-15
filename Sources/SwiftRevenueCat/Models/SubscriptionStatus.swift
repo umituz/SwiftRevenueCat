@@ -1,6 +1,6 @@
 import Foundation
 
-public struct SubscriptionStatus {
+public struct SubscriptionStatus: Equatable, Sendable {
     public let isPro: Bool
     public let expirationDate: Date?
     public let isActive: Bool

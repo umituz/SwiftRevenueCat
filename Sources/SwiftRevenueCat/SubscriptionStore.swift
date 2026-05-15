@@ -2,22 +2,31 @@ import Foundation
 import RevenueCat
 import OSLog
 
+// NSObject required: PurchasesDelegate extends NSObjectProtocol
 @MainActor
-public final class SubscriptionStore: NSObject, ObservableObject, SubscriptionStateProviding, OfferingsProviding, PurchaseProviding, PurchasesDelegate {
+public final class SubscriptionStore: NSObject,
+    ObservableObject,
+    SubscriptionStateProviding,
+    OfferingsProviding,
+    PurchaseProviding,
+    PurchasesDelegate {
 
     public struct Configuration {
         public let apiKeyInfoPlistKey: String
         public let proStatusCacheKey: String
         public let manageSubscriptionsURL: String
+        public let entitlementId: String?
 
         public init(
             apiKeyInfoPlistKey: String = "RCApiKey",
             proStatusCacheKey: String = "pro_status_cache",
-            manageSubscriptionsURL: String = "https://apps.apple.com/account/subscriptions"
+            manageSubscriptionsURL: String = "https://apps.apple.com/account/subscriptions",
+            entitlementId: String? = nil
         ) {
             self.apiKeyInfoPlistKey = apiKeyInfoPlistKey
             self.proStatusCacheKey = proStatusCacheKey
             self.manageSubscriptionsURL = manageSubscriptionsURL
+            self.entitlementId = entitlementId
         }
     }
 
@@ -32,23 +41,23 @@ public final class SubscriptionStore: NSObject, ObservableObject, SubscriptionSt
 
     public var onStatusChanged: ((Bool, CustomerInfo?) -> Void)?
 
-    private let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionStore")
-    private let offeringsRepo = OfferingsRepository()
-    private let executor = PurchaseExecutor()
+    // Internal access required for extensions in SubscriptionStore+Fetch/Purchase
+    let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionStore")
+    let offeringsRepo = OfferingsRepository()
+    let executor = PurchaseExecutor()
     private var observer: CustomerInfoObserver?
     private var isConfigured = false
-    private var config: Configuration?
-
-    internal func getConfig() -> Configuration? { config }
+    var config: Configuration?
 
     private override init() {
         super.init()
-        self.isPro = false
-        self.display = .empty
     }
 
     public func configure(with config: Configuration = Configuration()) {
-        guard !isConfigured else { return }
+        guard !isConfigured else {
+            logger.warning("SubscriptionStore already configured - ignoring duplicate call")
+            return
+        }
         self.config = config
 
         ProStatusCache.configure(cacheKey: config.proStatusCacheKey)
@@ -61,13 +70,18 @@ public final class SubscriptionStore: NSObject, ObservableObject, SubscriptionSt
         }
 
         isConfigured = true
-        observer = CustomerInfoObserver { [weak self] info in self?.applyCustomerInfo(info) }
+        observer = CustomerInfoObserver { [weak self] info in
+            self?.applyCustomerInfo(info)
+        }
         observer?.start()
         Task { await refreshStatus() }
     }
 
-    internal func applyCustomerInfo(_ info: CustomerInfo) {
-        let entitlement = EntitlementResolver.activeEntitlement(from: info)
+    func applyCustomerInfo(_ info: CustomerInfo) {
+        let entitlement = EntitlementResolver.activeEntitlement(
+            from: info,
+            entitlementId: config?.entitlementId
+        )
         let proActive = entitlement != nil
         self.customerInfo = info
         self.isPro = proActive
@@ -76,32 +90,55 @@ public final class SubscriptionStore: NSObject, ObservableObject, SubscriptionSt
         ProStatusCache.save(isPro: proActive, expirationDate: entitlement?.expirationDate)
 
         updateDisplay()
-        logger.info("Subscription updated: \(proActive ? "PRO" : "FREE"), entitlement: \(entitlement?.productIdentifier ?? "none")")
+
+        let status = proActive ? "PRO" : "FREE"
+        let product = entitlement?.productIdentifier ?? "none"
+        logger.info("Subscription updated: \(status), entitlement: \(product)")
 
         onStatusChanged?(proActive, info)
     }
 
-    internal func updateDisplay() {
-        self.display = SubscriptionDisplayMapper.map(customerInfo: customerInfo, offerings: offerings)
-    }
-
-    public func getStatus() -> SubscriptionStatus {
-        SubscriptionStatus(
-            isPro: isPro,
-            expirationDate: EntitlementResolver.activeEntitlement(from: customerInfo)?.expirationDate,
-            isActive: isPro
+    func updateDisplay() {
+        self.display = SubscriptionDisplayMapper.map(
+            customerInfo: customerInfo,
+            offerings: offerings
         )
     }
 
-    // MARK: - Internal Accessors
+    public func getStatus() -> SubscriptionStatus {
+        let activeEntitlement = EntitlementResolver.activeEntitlement(
+            from: customerInfo,
+            entitlementId: config?.entitlementId
+        )
+        return SubscriptionStatus(
+            isPro: isPro,
+            expirationDate: activeEntitlement?.expirationDate,
+            isActive: isSubscriptionActive()
+        )
+    }
 
-    internal func getLogger() -> Logger { logger }
-    internal func getOfferingsRepo() -> OfferingsRepository { offeringsRepo }
-    internal func getExecutor() -> PurchaseExecutor { executor }
-    internal func setIsLoading(_ value: Bool) { isLoading = value }
-    internal func setOfferings(_ value: Offerings?) { offerings = value }
+    public func reset() {
+        observer?.cancel()
+        observer = nil
+        customerInfo = nil
+        isPro = false
+        isLoading = false
+        offerings = nil
+        hasVerifiedWithServer = false
+        display = .empty
+        ProStatusCache.clear()
+        logger.info("SubscriptionStore reset")
+    }
+
+    // MARK: - Internal Setters (for extensions across files)
+
+    func setLoading(_ value: Bool) { isLoading = value }
+    func updateOfferings(_ value: Offerings?) { offerings = value }
 
     // MARK: - PurchasesDelegate
 
-    nonisolated public func purchases(_ purchases: Purchases, shouldPurchasePromoProduct product: StoreProduct) -> Bool { true }
+    nonisolated public func purchases(
+        _ purchases: Purchases,
+        shouldPurchasePromoProduct product: StoreProduct
+    ) -> Bool { true }
 }

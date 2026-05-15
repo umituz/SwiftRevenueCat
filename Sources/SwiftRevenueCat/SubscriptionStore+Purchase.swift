@@ -1,34 +1,40 @@
 import Foundation
 import RevenueCat
+
 #if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
 #endif
 
 extension SubscriptionStore {
 
     public func purchase(_ package: Package) async -> PurchaseResult {
-        setIsLoading(true)
-        defer { setIsLoading(false) }
+        setLoading(true)
+        defer { setLoading(false) }
 
-        let result = await getExecutor().purchase(package)
+        let result = await executor.purchase(package)
         await refreshStatus()
         return result
     }
 
     public func restorePurchases() async -> RestoreResult {
-        setIsLoading(true)
-        defer { setIsLoading(false) }
+        setLoading(true)
+        defer { setLoading(false) }
 
-        let result = await getExecutor().restorePurchases()
+        let result = await executor.restorePurchases()
         await refreshStatus()
         return result
     }
 
     public func manageSubscription() {
-        let urlString = getConfig()?.manageSubscriptionsURL ?? "https://apps.apple.com/account/subscriptions"
+        let urlString = config?.manageSubscriptionsURL ?? "https://apps.apple.com/account/subscriptions"
         guard let url = URL(string: urlString) else { return }
+
         #if canImport(UIKit)
         UIApplication.shared.open(url)
+        #elseif canImport(AppKit)
+        NSWorkspace.shared.open(url)
         #endif
     }
 }

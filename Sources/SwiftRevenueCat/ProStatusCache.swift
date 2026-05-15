@@ -1,8 +1,8 @@
 import Foundation
-import os
+import OSLog
 import Security
 
-public enum ProStatusCache {
+enum ProStatusCache {
 
     private struct CacheEntry: Codable {
         let isPro: Bool
@@ -11,12 +11,13 @@ public enum ProStatusCache {
     }
 
     private static var cacheKey: String = "pro_status_cache"
+    private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "ProStatusCache")
 
-    public static func configure(cacheKey: String) {
+    static func configure(cacheKey: String) {
         Self.cacheKey = cacheKey
     }
 
-    public static func save(isPro: Bool, expirationDate: Date? = nil) {
+    static func save(isPro: Bool, expirationDate: Date? = nil) {
         let entry = CacheEntry(
             isPro: isPro,
             expirationDate: expirationDate,
@@ -26,57 +27,57 @@ public enum ProStatusCache {
             let data = try JSONEncoder().encode(entry)
             saveToKeychain(data: data)
         } catch {
-            Logger(subsystem: "SwiftRevenueCat", category: "ProStatusCache")
-                .error("Failed to encode cache entry: \(error.localizedDescription)")
+            logger.error("Failed to encode cache entry: \(error.localizedDescription)")
         }
     }
 
-    public static func load() -> Bool {
+    static func load() -> Bool {
         guard let data = loadFromKeychain() else { return false }
-        let entry: CacheEntry
         do {
-            entry = try JSONDecoder().decode(CacheEntry.self, from: data)
+            let entry = try JSONDecoder().decode(CacheEntry.self, from: data)
+            guard entry.isPro else { return false }
+            if let expiration = entry.expirationDate {
+                return Date() < expiration
+            }
+            return true
         } catch {
-            Logger(subsystem: "SwiftRevenueCat", category: "ProStatusCache")
-                .error("Failed to decode cache entry: \(error.localizedDescription)")
+            logger.error("Failed to decode cache entry: \(error.localizedDescription)")
             return false
         }
-
-        guard entry.isPro else { return false }
-
-        if let expiration = entry.expirationDate {
-            return Date() < expiration
-        }
-
-        return true
     }
 
-    public static func needsReverification() -> Bool {
+    static func needsReverification() -> Bool {
         guard let data = loadFromKeychain() else { return true }
-        let entry: CacheEntry
         do {
-            entry = try JSONDecoder().decode(CacheEntry.self, from: data)
+            let entry = try JSONDecoder().decode(CacheEntry.self, from: data)
+            guard entry.isPro else { return true }
+            if let expiration = entry.expirationDate {
+                return Date() >= expiration
+            }
+            return false
         } catch {
             return true
         }
-
-        guard entry.isPro else { return true }
-
-        if let expiration = entry.expirationDate {
-            return Date() >= expiration
-        }
-
-        return false
     }
 
-    public static func getExpirationDate() -> Date? {
+    static func getExpirationDate() -> Date? {
         guard let data = loadFromKeychain() else { return nil }
-        let entry: CacheEntry
         do {
-            entry = try JSONDecoder().decode(CacheEntry.self, from: data)
+            let entry = try JSONDecoder().decode(CacheEntry.self, from: data)
             return entry.expirationDate
         } catch {
             return nil
+        }
+    }
+
+    static func clear() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: cacheKey
+        ]
+        let status = SecItemDelete(query as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            logger.error("Keychain clear failed with OSStatus: \(status)")
         }
     }
 
@@ -86,14 +87,22 @@ public enum ProStatusCache {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: cacheKey,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
         ]
 
-        SecItemDelete(query as CFDictionary)
+        let updateAttributes: [String: Any] = [kSecValueData as String: data]
+        let updateStatus = SecItemUpdate(query as CFDictionary, updateAttributes as CFDictionary)
 
-        var addQuery = query
-        addQuery[kSecValueData as String] = data
-        SecItemAdd(addQuery as CFDictionary, nil)
+        if updateStatus == errSecItemNotFound {
+            var addQuery = query
+            addQuery[kSecValueData as String] = data
+            let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
+            if addStatus != errSecSuccess {
+                logger.error("Keychain save failed with OSStatus: \(addStatus)")
+            }
+        } else if updateStatus != errSecSuccess {
+            logger.error("Keychain update failed with OSStatus: \(updateStatus)")
+        }
     }
 
     private static func loadFromKeychain() -> Data? {
@@ -106,6 +115,9 @@ public enum ProStatusCache {
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            logger.error("Keychain load failed with OSStatus: \(status)")
+        }
         return status == errSecSuccess ? (result as? Data) : nil
     }
 }

@@ -3,16 +3,16 @@ import RevenueCat
 import OSLog
 
 @MainActor
-public final class CustomerInfoObserver {
+final class CustomerInfoObserver {
     private let logger = Logger(subsystem: "SwiftRevenueCat", category: "CustomerInfoObserver")
     private var streamTask: Task<Void, Never>?
     private let updateHandler: (CustomerInfo) -> Void
 
-    public init(updateHandler: @escaping (CustomerInfo) -> Void) {
+    init(updateHandler: @escaping (CustomerInfo) -> Void) {
         self.updateHandler = updateHandler
     }
 
-    public func start() {
+    func start() {
         cancel()
 
         streamTask = Task { [weak self] in
@@ -28,7 +28,7 @@ public final class CustomerInfoObserver {
         logger.info("CustomerInfoObserver started")
     }
 
-    public func cancel() {
+    func cancel() {
         streamTask?.cancel()
         streamTask = nil
     }

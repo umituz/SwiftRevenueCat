@@ -3,12 +3,12 @@ import RevenueCat
 import OSLog
 
 @MainActor
-public final class PurchaseExecutor: PurchaseProviding {
+final class PurchaseExecutor: PurchaseProviding {
     private let logger = Logger(subsystem: "SwiftRevenueCat", category: "PurchaseExecutor")
 
-    public init() {}
+    init() {}
 
-    public func purchase(_ package: Package) async -> PurchaseResult {
+    func purchase(_ package: Package) async -> PurchaseResult {
         logger.info("Starting purchase for: \(package.identifier)")
 
         do {
@@ -30,11 +30,11 @@ public final class PurchaseExecutor: PurchaseProviding {
             }
         } catch {
             logger.error("Purchase failed: \(error.localizedDescription)")
-            return .failed(error.localizedDescription)
+            return .failed(error)
         }
     }
 
-    public func restorePurchases() async -> RestoreResult {
+    func restorePurchases() async -> RestoreResult {
         logger.info("Starting restore purchases")
 
         do {
@@ -50,7 +50,7 @@ public final class PurchaseExecutor: PurchaseProviding {
             }
         } catch {
             logger.error("Restore failed: \(error.localizedDescription)")
-            return .failed(error.localizedDescription)
+            return .failed(error)
         }
     }
 }

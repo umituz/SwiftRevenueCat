@@ -2,11 +2,11 @@ import Foundation
 import RevenueCat
 import OSLog
 
-public enum PlanMapper {
+enum PlanMapper {
 
     private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "PlanMapper")
 
-    public static func mapPlans(from offerings: Offerings?) -> [Plan] {
+    static func mapPlans(from offerings: Offerings?) -> [Plan] {
         guard let packages = offerings?.current?.availablePackages, !packages.isEmpty else {
             return []
         }
@@ -26,9 +26,9 @@ public enum PlanMapper {
 
         let badge: String? = {
             switch package.packageType {
-            case .annual: return "Best Value"
-            case .weekly: return "Most Popular"
-            case .lifetime: return "One Time"
+            case .annual: return SubscriptionL10n.bestValue
+            case .weekly: return SubscriptionL10n.mostPopular
+            case .lifetime: return SubscriptionL10n.oneTime
             default: return nil
             }
         }()

@@ -5,7 +5,12 @@ public enum PermissionGateway {
 
     private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "PermissionGateway")
 
-    public static func checkCreation(isPro: Bool, currentCount: Int, limit: Int, type: String = "items") -> PermissionResult {
+    public static func checkCreation(
+        isPro: Bool,
+        currentCount: Int,
+        limit: Int,
+        type: String = "items"
+    ) -> PermissionResult {
         if isPro {
             logger.debug("Creation ALLOWED: User is Pro")
             return PermissionResult(allowed: true)

@@ -3,13 +3,13 @@ import RevenueCat
 import OSLog
 
 @MainActor
-public final class OfferingsRepository {
+final class OfferingsRepository {
     private let logger = Logger(subsystem: "SwiftRevenueCat", category: "OfferingsRepository")
     private var fetchTask: Task<Offerings?, Never>?
 
-    public init() {}
+    init() {}
 
-    public func fetch() async -> Offerings? {
+    func fetch() async -> Offerings? {
         if let existingTask = fetchTask {
             return await existingTask.value
         }
@@ -24,7 +24,12 @@ public final class OfferingsRepository {
             } catch {
                 self?.logger.error("Offerings fetch failed: \(error.localizedDescription)")
 
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                do {
+                    try await Task.sleep(nanoseconds: 2_000_000_000)
+                } catch {
+                    self?.logger.info("Offerings retry cancelled")
+                    return nil
+                }
 
                 do {
                     let retried = try await Purchases.shared.offerings()

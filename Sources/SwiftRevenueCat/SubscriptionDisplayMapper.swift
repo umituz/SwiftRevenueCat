@@ -2,11 +2,12 @@ import Foundation
 import RevenueCat
 import OSLog
 
-public enum SubscriptionDisplayMapper {
+enum SubscriptionDisplayMapper {
 
     private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionDisplayMapper")
 
-    public static func map(customerInfo: CustomerInfo?, offerings: Offerings?) -> SubscriptionDisplayModel {
+    @MainActor
+    static func map(customerInfo: CustomerInfo?, offerings: Offerings?) -> SubscriptionDisplayModel {
         guard let info = customerInfo else { return .empty }
 
         let entitlement = EntitlementResolver.activeEntitlement(from: info)
