@@ -3,11 +3,6 @@ import RevenueCat
 
 #if canImport(UIKit)
 import UIKit
-#elseif canImport(AppKit)
-import AppKit
-#endif
-
-#if canImport(StoreKit)
 import StoreKit
 #endif
 
@@ -38,13 +33,11 @@ extension SubscriptionStore {
 
         #if canImport(UIKit)
         UIApplication.shared.open(url)
-        #elseif canImport(AppKit)
-        NSWorkspace.shared.open(url)
         #endif
     }
 
     public func presentCodeRedemptionSheet() {
-        #if os(iOS)
+        #if canImport(UIKit)
         SKPaymentQueue.default().presentCodeRedemptionSheet()
         #endif
     }
