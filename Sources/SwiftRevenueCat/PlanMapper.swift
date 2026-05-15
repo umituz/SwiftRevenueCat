@@ -7,7 +7,8 @@ enum PlanMapper {
     private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "PlanMapper")
 
     static func mapPlans(from offerings: Offerings?) -> [Plan] {
-        guard let packages = offerings?.current?.availablePackages, !packages.isEmpty else {
+        guard let packages = offerings?.current?.availablePackages,
+              !packages.isEmpty else {
             return []
         }
 
@@ -20,7 +21,10 @@ enum PlanMapper {
             }
     }
 
-    private static func mapPlan(from package: Package, allProducts: [StoreProduct]) -> Plan {
+    private static func mapPlan(
+        from package: Package,
+        allProducts: [StoreProduct]
+    ) -> Plan {
         let product = package.storeProduct
         let period = SubscriptionContentResolver.periodLabel(from: product)
 
@@ -35,10 +39,28 @@ enum PlanMapper {
 
         let savingsText: String? = {
             if package.packageType == .annual {
-                return SubscriptionContentResolver.savingsPercentage(annualProduct: product, allProducts: allProducts)
+                return SubscriptionContentResolver.savingsPercentage(
+                    annualProduct: product,
+                    allProducts: allProducts
+                )
             }
             return nil
         }()
+
+        let discount = product.introductoryDiscount
+        let hasFreeTrial = discount?.paymentMode == .freeTrial
+        let trialPeriod = discount.map {
+            SubscriptionContentResolver.formatPeriod($0.subscriptionPeriod)
+        }
+        let introductoryPrice = discount.map {
+            $0.paymentMode == .freeTrial ? "Free" : $0.localizedPriceString
+        }
+        let offerDescription = discount.flatMap {
+            SubscriptionContentResolver.buildOfferDescription(
+                discount: $0,
+                regularPrice: product.localizedPriceString
+            )
+        }
 
         return Plan(
             id: package.identifier,
@@ -48,7 +70,11 @@ enum PlanMapper {
             badge: badge,
             packageType: package.packageType,
             package: package,
-            savingsText: savingsText
+            savingsText: savingsText,
+            hasFreeTrial: hasFreeTrial,
+            trialPeriod: trialPeriod,
+            introductoryPrice: introductoryPrice,
+            offerDescription: offerDescription
         )
     }
 }

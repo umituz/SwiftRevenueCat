@@ -29,8 +29,15 @@ final class PurchaseExecutor: PurchaseProviding {
                 return .notEntitled
             }
         } catch {
+            let mapped = SubscriptionError.from(error)
+
+            if case .purchaseCancelled = mapped {
+                logger.info("User cancelled purchase")
+                return .cancelled
+            }
+
             logger.error("Purchase failed: \(error.localizedDescription)")
-            return .failed(error)
+            return .failed(mapped)
         }
     }
 
@@ -50,7 +57,7 @@ final class PurchaseExecutor: PurchaseProviding {
             }
         } catch {
             logger.error("Restore failed: \(error.localizedDescription)")
-            return .failed(error)
+            return .failed(SubscriptionError.from(error))
         }
     }
 }

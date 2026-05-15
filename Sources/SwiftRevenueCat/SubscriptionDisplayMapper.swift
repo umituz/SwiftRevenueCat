@@ -7,7 +7,10 @@ enum SubscriptionDisplayMapper {
     private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionDisplayMapper")
 
     @MainActor
-    static func map(customerInfo: CustomerInfo?, offerings: Offerings?) -> SubscriptionDisplayModel {
+    static func map(
+        customerInfo: CustomerInfo?,
+        offerings: Offerings?
+    ) -> SubscriptionDisplayModel {
         guard let info = customerInfo else { return .empty }
 
         let entitlement = EntitlementResolver.activeEntitlement(from: info)
@@ -17,13 +20,25 @@ enum SubscriptionDisplayMapper {
         return SubscriptionDisplayModel(
             isPro: proActive,
             isLifetime: isLifetime,
-            planName: SubscriptionContentResolver.activePlanDisplayName(customerInfo: info, offerings: offerings),
-            priceText: SubscriptionContentResolver.activePlanPriceText(customerInfo: info, offerings: offerings),
-            expirationDate: entitlement.flatMap { $0.expirationDate.map { formatDate($0) } },
-            purchaseDate: entitlement.flatMap { $0.latestPurchaseDate.map { formatDate($0) } },
+            planName: SubscriptionContentResolver.activePlanDisplayName(
+                customerInfo: info,
+                offerings: offerings
+            ),
+            priceText: SubscriptionContentResolver.activePlanPriceText(
+                customerInfo: info,
+                offerings: offerings
+            ),
+            expirationDate: entitlement.flatMap {
+                $0.expirationDate.map { formatDate($0) }
+            },
+            purchaseDate: entitlement.flatMap {
+                $0.latestPurchaseDate.map { formatDate($0) }
+            },
             storeName: mapStore(entitlement?.store),
             isSandbox: entitlement?.isSandbox ?? false,
-            willRenew: isLifetime ? false : (entitlement?.willRenew ?? false)
+            willRenew: isLifetime ? false : (entitlement?.willRenew ?? false),
+            isInBillingRetryPeriod: (entitlement?.billingIssueDetectedAt != nil)
+                && (entitlement?.willRenew ?? false)
         )
     }
 

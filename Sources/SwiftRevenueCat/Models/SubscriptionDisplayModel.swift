@@ -10,6 +10,7 @@ public struct SubscriptionDisplayModel: Equatable, Sendable {
     public let storeName: String
     public let isSandbox: Bool
     public let willRenew: Bool
+    public let isInBillingRetryPeriod: Bool
 
     public init(
         isPro: Bool,
@@ -20,7 +21,8 @@ public struct SubscriptionDisplayModel: Equatable, Sendable {
         purchaseDate: String?,
         storeName: String,
         isSandbox: Bool,
-        willRenew: Bool
+        willRenew: Bool,
+        isInBillingRetryPeriod: Bool = false
     ) {
         self.isPro = isPro
         self.isLifetime = isLifetime
@@ -31,6 +33,7 @@ public struct SubscriptionDisplayModel: Equatable, Sendable {
         self.storeName = storeName
         self.isSandbox = isSandbox
         self.willRenew = willRenew
+        self.isInBillingRetryPeriod = isInBillingRetryPeriod
     }
 
     public static let empty = SubscriptionDisplayModel(

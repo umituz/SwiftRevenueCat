@@ -35,11 +35,23 @@ public final class SubscriptionStore: NSObject,
     @Published public private(set) var isPro: Bool = false
     @Published public private(set) var isLoading: Bool = false
     @Published public private(set) var offerings: Offerings?
+    @Published public private(set) var plans: [Plan] = []
     @Published public private(set) var customerInfo: CustomerInfo?
     @Published public private(set) var hasVerifiedWithServer: Bool = false
     @Published public private(set) var display: SubscriptionDisplayModel = .empty
+    @Published public private(set) var configurationError: SubscriptionError?
 
     public var onStatusChanged: ((Bool, CustomerInfo?) -> Void)?
+
+    public var activePlan: Plan? {
+        guard let entitlement = EntitlementResolver.activeEntitlement(
+            from: customerInfo,
+            entitlementId: config?.entitlementId
+        ) else { return nil }
+        return plans.first {
+            $0.package?.storeProduct.productIdentifier == entitlement.productIdentifier
+        }
+    }
 
     // Internal access required for extensions in SubscriptionStore+Fetch/Purchase
     let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionStore")
@@ -65,11 +77,15 @@ public final class SubscriptionStore: NSObject,
         let apiKey = SubscriptionAPIKeyProvider.apiKey(from: config.apiKeyInfoPlistKey)
         let success = RCConfigurator.configure(apiKey: apiKey, delegate: self)
         guard success else {
+            configurationError = .configurationError(
+                "RevenueCat API key is missing or empty"
+            )
             logger.error("RevenueCat configuration failed - API key missing")
             return
         }
 
         isConfigured = true
+        configurationError = nil
         observer = CustomerInfoObserver { [weak self] info in
             self?.applyCustomerInfo(info)
         }
@@ -117,6 +133,11 @@ public final class SubscriptionStore: NSObject,
         )
     }
 
+    public var relativeExpirationDate: String? {
+        guard let date = getExpirationDate() else { return nil }
+        return SubscriptionContentResolver.relativeDateString(from: date)
+    }
+
     public func reset() {
         observer?.cancel()
         observer = nil
@@ -124,8 +145,10 @@ public final class SubscriptionStore: NSObject,
         isPro = false
         isLoading = false
         offerings = nil
+        plans = []
         hasVerifiedWithServer = false
         display = .empty
+        configurationError = nil
         ProStatusCache.clear()
         logger.info("SubscriptionStore reset")
     }
@@ -133,7 +156,10 @@ public final class SubscriptionStore: NSObject,
     // MARK: - Internal Setters (for extensions across files)
 
     func setLoading(_ value: Bool) { isLoading = value }
-    func updateOfferings(_ value: Offerings?) { offerings = value }
+    func updateOfferings(_ value: Offerings?) {
+        offerings = value
+        plans = PlanMapper.mapPlans(from: value)
+    }
 
     // MARK: - PurchasesDelegate
 

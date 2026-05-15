@@ -73,4 +73,26 @@ extension SubscriptionStore {
             entitlementId: config?.entitlementId
         )?.expirationDate
     }
+
+    public func checkTrialEligibility(
+        for productId: String
+    ) async -> TrialEligibility {
+        guard let product = offerings?.current?.availablePackages
+            .first(where: { $0.storeProduct.productIdentifier == productId })?
+            .storeProduct else {
+            return .unknown
+        }
+
+        let status = await Purchases.shared.checkTrialOrIntroDiscountEligibility(
+            product: product
+        )
+
+        switch status {
+        case .eligible: return .eligible
+        case .ineligible: return .ineligible
+        case .unknown: return .unknown
+        case .noIntroOfferExists: return .noOfferAvailable
+        @unknown default: return .unknown
+        }
+    }
 }

@@ -6,7 +6,9 @@ let package = Package(
     name: "SwiftRevenueCat",
     platforms: [
         .iOS(.v17),
-        .macOS(.v14)
+        .macOS(.v14),
+        .visionOS(.v1),
+        .tvOS(.v17)
     ],
     products: [
         .library(

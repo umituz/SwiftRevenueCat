@@ -10,6 +10,10 @@ public struct Plan: Identifiable, Equatable {
     public let packageType: PackageType
     public let package: Package?
     public let savingsText: String?
+    public let hasFreeTrial: Bool
+    public let trialPeriod: String?
+    public let introductoryPrice: String?
+    public let offerDescription: String?
 
     public init(
         id: String,
@@ -19,7 +23,11 @@ public struct Plan: Identifiable, Equatable {
         badge: String?,
         packageType: PackageType,
         package: Package?,
-        savingsText: String?
+        savingsText: String?,
+        hasFreeTrial: Bool = false,
+        trialPeriod: String? = nil,
+        introductoryPrice: String? = nil,
+        offerDescription: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -29,6 +37,10 @@ public struct Plan: Identifiable, Equatable {
         self.packageType = packageType
         self.package = package
         self.savingsText = savingsText
+        self.hasFreeTrial = hasFreeTrial
+        self.trialPeriod = trialPeriod
+        self.introductoryPrice = introductoryPrice
+        self.offerDescription = offerDescription
     }
 
     public static func == (lhs: Plan, rhs: Plan) -> Bool {
@@ -38,5 +50,9 @@ public struct Plan: Identifiable, Equatable {
             && lhs.period == rhs.period
             && lhs.badge == rhs.badge
             && lhs.savingsText == rhs.savingsText
+            && lhs.hasFreeTrial == rhs.hasFreeTrial
+            && lhs.trialPeriod == rhs.trialPeriod
+            && lhs.introductoryPrice == rhs.introductoryPrice
+            && lhs.offerDescription == rhs.offerDescription
     }
 }
