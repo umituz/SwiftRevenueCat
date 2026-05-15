@@ -43,7 +43,7 @@ public enum SubscriptionError: LocalizedError {
             case .productNotAvailableForPurchaseError:
                 return .productNotAvailable
             case .invalidCredentialsError:
-                return .configurationError("Invalid API key")
+                return .configurationError(SubscriptionL10n.errorInvalidApiKey)
             default:
                 return .unknown(underlying: error)
             }

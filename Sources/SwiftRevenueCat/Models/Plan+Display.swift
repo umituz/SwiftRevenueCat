@@ -1,5 +1,3 @@
-import Foundation
-
 extension Plan {
 
     public var isAnnual: Bool { packageType == .annual }

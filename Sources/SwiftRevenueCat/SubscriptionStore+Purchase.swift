@@ -4,6 +4,8 @@ import RevenueCat
 #if canImport(UIKit)
 import UIKit
 import StoreKit
+#elseif canImport(AppKit)
+import AppKit
 #endif
 
 extension SubscriptionStore {
@@ -33,6 +35,8 @@ extension SubscriptionStore {
 
         #if canImport(UIKit)
         UIApplication.shared.open(url)
+        #elseif canImport(AppKit)
+        NSWorkspace.shared.open(url)
         #endif
     }
 

@@ -9,7 +9,7 @@ public enum PermissionGateway {
         isPro: Bool,
         currentCount: Int,
         limit: Int,
-        type: String = "items"
+        type: String = SubscriptionL10n.defaultItemName
     ) -> PermissionResult {
         if isPro {
             logger.debug("Creation ALLOWED: User is Pro")

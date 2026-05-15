@@ -53,7 +53,7 @@ enum PlanMapper {
             SubscriptionContentResolver.formatPeriod($0.subscriptionPeriod)
         }
         let introductoryPrice = discount.map {
-            $0.paymentMode == .freeTrial ? "Free" : $0.localizedPriceString
+            $0.paymentMode == .freeTrial ? SubscriptionL10n.freePlan : $0.localizedPriceString
         }
         let offerDescription = discount.flatMap {
             SubscriptionContentResolver.buildOfferDescription(

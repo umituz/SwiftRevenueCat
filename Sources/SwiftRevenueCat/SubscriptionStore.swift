@@ -78,7 +78,7 @@ public final class SubscriptionStore: NSObject,
         let success = RCConfigurator.configure(apiKey: apiKey, delegate: self)
         guard success else {
             configurationError = .configurationError(
-                "RevenueCat API key is missing or empty"
+                SubscriptionL10n.errorConfigMissingApiKey
             )
             logger.error("RevenueCat configuration failed - API key missing")
             return

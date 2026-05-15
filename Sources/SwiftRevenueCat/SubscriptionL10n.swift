@@ -165,4 +165,25 @@ public enum SubscriptionL10n {
             defaultValue: "This product is not available for purchase."
         )
     }
+
+    public static var errorInvalidApiKey: String {
+        String(
+            localized: "subscription.error.invalid_api_key",
+            defaultValue: "Invalid API key"
+        )
+    }
+
+    public static var errorConfigMissingApiKey: String {
+        String(
+            localized: "subscription.error.config_missing_key",
+            defaultValue: "RevenueCat API key is missing or empty"
+        )
+    }
+
+    public static var defaultItemName: String {
+        String(
+            localized: "subscription.default.item_name",
+            defaultValue: "items"
+        )
+    }
 }
