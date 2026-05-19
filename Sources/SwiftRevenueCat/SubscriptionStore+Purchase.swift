@@ -41,9 +41,9 @@ extension SubscriptionStore {
     }
 
     public func presentCodeRedemptionSheet() {
-        #if canImport(UIKit)
-        if #available(iOS 16.0, *) {
-            AppStore.presentCodeRedemptionSheet()
+        #if canImport(UIKit) && !os(visionOS)
+        if #available(iOS 14.0, *) {
+            SKPaymentQueue.default().presentCodeRedemptionSheet()
         }
         #endif
     }
