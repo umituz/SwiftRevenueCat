@@ -42,7 +42,9 @@ extension SubscriptionStore {
 
     public func presentCodeRedemptionSheet() {
         #if canImport(UIKit)
-        AppStore.presentCodeRedemptionSheet()
+        if #available(iOS 16.0, *) {
+            AppStore.presentCodeRedemptionSheet()
+        }
         #endif
     }
 
