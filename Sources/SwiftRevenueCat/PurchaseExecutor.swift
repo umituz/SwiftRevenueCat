@@ -1,5 +1,6 @@
 import Foundation
 import RevenueCat
+import StoreKit
 import OSLog
 
 @MainActor
@@ -9,6 +10,11 @@ final class PurchaseExecutor: PurchaseProviding {
     init() {}
 
     func purchase(_ package: Package) async -> PurchaseResult {
+        guard canMakePayments() else {
+            logger.warning("Device cannot make payments - restrictions enabled")
+            return .failed(.purchaseNotAllowed)
+        }
+
         logger.info("Starting purchase for: \(package.identifier)")
 
         do {
@@ -59,5 +65,13 @@ final class PurchaseExecutor: PurchaseProviding {
             logger.error("Restore failed: \(error.localizedDescription)")
             return .failed(SubscriptionError.from(error))
         }
+    }
+
+    private func canMakePayments() -> Bool {
+        #if canImport(UIKit)
+        return SKPaymentQueue.canMakePayments()
+        #else
+        return true
+        #endif
     }
 }

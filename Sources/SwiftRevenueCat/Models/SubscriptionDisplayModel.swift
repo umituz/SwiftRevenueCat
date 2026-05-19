@@ -36,15 +36,17 @@ public struct SubscriptionDisplayModel: Equatable, Sendable {
         self.isInBillingRetryPeriod = isInBillingRetryPeriod
     }
 
-    public static let empty = SubscriptionDisplayModel(
-        isPro: false,
-        isLifetime: false,
-        planName: SubscriptionL10n.freePlan,
-        priceText: "",
-        expirationDate: nil,
-        purchaseDate: nil,
-        storeName: "",
-        isSandbox: false,
-        willRenew: false
-    )
+    public static var empty: SubscriptionDisplayModel {
+        SubscriptionDisplayModel(
+            isPro: false,
+            isLifetime: false,
+            planName: SubscriptionL10n.freePlan,
+            priceText: "",
+            expirationDate: nil,
+            purchaseDate: nil,
+            storeName: "",
+            isSandbox: false,
+            willRenew: false
+        )
+    }
 }

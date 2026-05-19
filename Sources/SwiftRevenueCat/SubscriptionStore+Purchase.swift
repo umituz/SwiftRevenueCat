@@ -1,9 +1,9 @@
 import Foundation
 import RevenueCat
+import StoreKit
 
 #if canImport(UIKit)
 import UIKit
-import StoreKit
 #elseif canImport(AppKit)
 import AppKit
 #endif
@@ -42,7 +42,7 @@ extension SubscriptionStore {
 
     public func presentCodeRedemptionSheet() {
         #if canImport(UIKit)
-        SKPaymentQueue.default().presentCodeRedemptionSheet()
+        AppStore.presentCodeRedemptionSheet()
         #endif
     }
 

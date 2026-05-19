@@ -6,14 +6,25 @@ enum SubscriptionDisplayMapper {
 
     private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionDisplayMapper")
 
+    private static let displayDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
+
     @MainActor
     static func map(
         customerInfo: CustomerInfo?,
-        offerings: Offerings?
+        offerings: Offerings?,
+        entitlementId: String? = nil
     ) -> SubscriptionDisplayModel {
         guard let info = customerInfo else { return .empty }
 
-        let entitlement = EntitlementResolver.activeEntitlement(from: info)
+        let entitlement = EntitlementResolver.activeEntitlement(
+            from: info,
+            entitlementId: entitlementId
+        )
         let proActive = entitlement != nil
         let isLifetime = proActive && entitlement?.expirationDate == nil
 
@@ -43,20 +54,17 @@ enum SubscriptionDisplayMapper {
     }
 
     private static func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter.string(from: date)
+        displayDateFormatter.string(from: date)
     }
 
     private static func mapStore(_ store: Store?) -> String {
         guard let store else { return "" }
         switch store {
-        case .appStore: return "App Store"
-        case .macAppStore: return "Mac App Store"
-        case .playStore: return "Play Store"
-        case .stripe: return "Web"
-        case .promotional: return "Promotional"
+        case .appStore: return SubscriptionL10n.storeAppStore
+        case .macAppStore: return SubscriptionL10n.storeMacAppStore
+        case .playStore: return SubscriptionL10n.storePlayStore
+        case .stripe: return SubscriptionL10n.storeStripe
+        case .promotional: return SubscriptionL10n.storePromotional
         default: return ""
         }
     }

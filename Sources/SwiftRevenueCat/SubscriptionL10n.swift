@@ -114,6 +114,64 @@ public enum SubscriptionL10n {
         )
     }
 
+    public static var errorReceiptInUse: String {
+        String(
+            localized: "subscription.error.receipt_in_use",
+            defaultValue: "This receipt is already in use by another account."
+        )
+    }
+
+    public static var errorPaymentPending: String {
+        String(
+            localized: "subscription.error.payment_pending",
+            defaultValue: "Your payment is pending approval. You will get access once approved."
+        )
+    }
+
+    public static var storeAppStore: String {
+        String(
+            localized: "subscription.store.app_store",
+            defaultValue: "App Store"
+        )
+    }
+
+    public static var storeMacAppStore: String {
+        String(
+            localized: "subscription.store.mac_app_store",
+            defaultValue: "Mac App Store"
+        )
+    }
+
+    public static var storePlayStore: String {
+        String(
+            localized: "subscription.store.play_store",
+            defaultValue: "Play Store"
+        )
+    }
+
+    public static var storeStripe: String {
+        String(
+            localized: "subscription.store.stripe",
+            defaultValue: "Web"
+        )
+    }
+
+    public static var storePromotional: String {
+        String(
+            localized: "subscription.store.promotional",
+            defaultValue: "Promotional"
+        )
+    }
+
+    public static var purchasesDisabled: String {
+        String(
+            localized: "subscription.error.purchases_disabled",
+            defaultValue: "In-app purchases are restricted on this device."
+        )
+    }
+
+    // MARK: - Defaults
+
     public static var defaultItemName: String {
         String(
             localized: "subscription.default.item_name",

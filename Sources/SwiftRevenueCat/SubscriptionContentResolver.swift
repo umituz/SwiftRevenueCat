@@ -13,6 +13,12 @@ enum SubscriptionContentResolver {
         return formatter
     }()
 
+    private static let relativeDateFormatter: RelativeDateTimeFormatter = {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter
+    }()
+
     static func activePlanDisplayName(
         customerInfo: CustomerInfo?,
         offerings: Offerings?
@@ -110,9 +116,7 @@ enum SubscriptionContentResolver {
     }
 
     static func relativeDateString(from date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
+        relativeDateFormatter.localizedString(for: date, relativeTo: Date())
     }
 
     // MARK: - Private

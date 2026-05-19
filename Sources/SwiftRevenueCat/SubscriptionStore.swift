@@ -117,7 +117,8 @@ public final class SubscriptionStore: NSObject,
     func updateDisplay() {
         self.display = SubscriptionDisplayMapper.map(
             customerInfo: customerInfo,
-            offerings: offerings
+            offerings: offerings,
+            entitlementId: config?.entitlementId
         )
     }
 
@@ -149,6 +150,8 @@ public final class SubscriptionStore: NSObject,
         hasVerifiedWithServer = false
         display = .empty
         configurationError = nil
+        isConfigured = false
+        config = nil
         ProStatusCache.clear()
         logger.info("SubscriptionStore reset")
     }

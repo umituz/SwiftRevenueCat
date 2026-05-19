@@ -1,7 +1,7 @@
 import Foundation
 import RevenueCat
 
-public struct Plan: Identifiable, Equatable {
+public struct Plan: Identifiable, Equatable, Hashable {
     public let id: String
     public let title: String
     public let price: String
@@ -45,6 +45,7 @@ public struct Plan: Identifiable, Equatable {
 
     public static func == (lhs: Plan, rhs: Plan) -> Bool {
         lhs.id == rhs.id
+            && lhs.packageType == rhs.packageType
             && lhs.title == rhs.title
             && lhs.price == rhs.price
             && lhs.period == rhs.period
@@ -54,5 +55,18 @@ public struct Plan: Identifiable, Equatable {
             && lhs.trialPeriod == rhs.trialPeriod
             && lhs.introductoryPrice == rhs.introductoryPrice
             && lhs.offerDescription == rhs.offerDescription
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(title)
+        hasher.combine(price)
+        hasher.combine(period)
+        hasher.combine(badge)
+        hasher.combine(savingsText)
+        hasher.combine(hasFreeTrial)
+        hasher.combine(trialPeriod)
+        hasher.combine(introductoryPrice)
+        hasher.combine(offerDescription)
     }
 }
