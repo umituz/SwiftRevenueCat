@@ -5,6 +5,7 @@ import Security
 enum KeychainStore {
 
     private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "KeychainStore")
+    private static let serviceIdentifier = "SwiftRevenueCat"
 
     @discardableResult
     static func save(data: Data, forAccount account: String) -> Bool {
@@ -13,6 +14,7 @@ enum KeychainStore {
 
         let addQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceIdentifier,
             kSecAttrAccount as String: account,
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
@@ -28,6 +30,7 @@ enum KeychainStore {
     static func load(account: String) -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceIdentifier,
             kSecAttrAccount as String: account,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
@@ -53,6 +56,7 @@ enum KeychainStore {
     private static func keychainQuery(account: String) -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceIdentifier,
             kSecAttrAccount as String: account
         ]
     }

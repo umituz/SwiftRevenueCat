@@ -54,7 +54,7 @@ enum SubscriptionContentResolver {
         if let pkg = matchingPackage {
             let price = pkg.storeProduct.localizedPriceString
             let period = periodLabel(from: pkg.storeProduct)
-            return "\(price) \(period)"
+            return SubscriptionL10n.planPricePeriod(price: price, period: period)
         }
 
         return ""
@@ -65,7 +65,7 @@ enum SubscriptionContentResolver {
             return SubscriptionL10n.once
         }
         let formatted = formatPeriod(period)
-        return "/\(formatted)"
+        return SubscriptionL10n.periodPrefix(formatted)
     }
 
     static func formatPeriod(_ period: SubscriptionPeriod) -> String {

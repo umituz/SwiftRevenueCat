@@ -8,13 +8,18 @@ extension SubscriptionStore {
             logger.warning("Purchases is not configured yet. Skipping refreshStatus.")
             return
         }
+
+        setLoading(true)
+        defer { setLoading(false) }
+
         do {
             let info = try await Purchases.shared.customerInfo()
             applyCustomerInfo(info)
         } catch {
             logger.error("Failed to refresh status: \(error.localizedDescription)")
         }
-        await fetchOfferings()
+
+        await performOfferingsFetch()
     }
 
     public func fetchOfferings() async {
@@ -26,6 +31,10 @@ extension SubscriptionStore {
         setLoading(true)
         defer { setLoading(false) }
 
+        await performOfferingsFetch()
+    }
+
+    func performOfferingsFetch() async {
         if let fetched = await offeringsRepo.fetch() {
             updateOfferings(fetched)
             updateDisplay()

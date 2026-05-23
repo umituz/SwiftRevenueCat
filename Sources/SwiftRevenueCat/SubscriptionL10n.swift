@@ -24,6 +24,14 @@ public enum SubscriptionL10n {
         String(localized: "subscription.period.once", defaultValue: "once")
     }
 
+    public static func periodPrefix(_ period: String) -> String {
+        String(localized: "subscription.period.prefix", defaultValue: "/\(period)")
+    }
+
+    public static func planPricePeriod(price: String, period: String) -> String {
+        String(localized: "subscription.plan.price_period", defaultValue: "\(price) \(period)")
+    }
+
     // MARK: - Savings
 
     public static func savings(_ percent: Int) -> String {

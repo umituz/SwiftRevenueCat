@@ -1,6 +1,6 @@
 import Foundation
 
-public enum SubscriptionError: LocalizedError, Sendable {
+public enum SubscriptionError: LocalizedError, Sendable, Equatable {
     case networkError
     case purchaseCancelled
     case purchaseNotAllowed
@@ -45,26 +45,6 @@ public enum SubscriptionError: LocalizedError, Sendable {
 
     public static func from(_ error: Error) -> SubscriptionError {
         SubscriptionErrorMapper.map(error)
-    }
-}
-
-extension SubscriptionError: Equatable {
-    public static func == (lhs: SubscriptionError, rhs: SubscriptionError) -> Bool {
-        switch (lhs, rhs) {
-        case (.networkError, .networkError): return true
-        case (.purchaseCancelled, .purchaseCancelled): return true
-        case (.purchaseNotAllowed, .purchaseNotAllowed): return true
-        case (.storeProblem, .storeProblem): return true
-        case (.productNotAvailable, .productNotAvailable): return true
-        case (.receiptInUse, .receiptInUse): return true
-        case (.paymentPending, .paymentPending): return true
-        case (.insufficientPermissions, .insufficientPermissions): return true
-        case (.apiKeyInvalid, .apiKeyInvalid): return true
-        case (.apiKeyMissing, .apiKeyMissing): return true
-        case (.notConfigured, .notConfigured): return true
-        case (.unknown(let a), .unknown(let b)): return a == b
-        default: return false
-        }
     }
 }
 

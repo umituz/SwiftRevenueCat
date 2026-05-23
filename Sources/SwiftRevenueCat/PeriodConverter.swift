@@ -3,9 +3,9 @@ import RevenueCat
 
 enum PeriodConverter {
 
-    static let daysPerWeek = 7
-    static let daysPerMonth = 30
-    static let daysPerYear = 365
+    private static let daysPerWeek = 7
+    private static let daysPerMonth = 30
+    private static let daysPerYear = 365
 
     static func daysInPeriod(_ period: SubscriptionPeriod) -> Int {
         let days: Int

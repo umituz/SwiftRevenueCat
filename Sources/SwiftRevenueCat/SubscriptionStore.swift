@@ -17,7 +17,12 @@ public final class SubscriptionStore: NSObject,
         public let manageSubscriptionsURL: URL
         public let entitlementId: String?
 
-        private static let defaultManageSubscriptionsURL = URL(string: "https://apps.apple.com/account/subscriptions")!
+        private static let defaultManageSubscriptionsURL: URL = {
+            guard let url = URL(string: "https://apps.apple.com/account/subscriptions") else {
+                fatalError("Default manageSubscriptionsURL is invalid — this is a compile-time constant and should never fail")
+            }
+            return url
+        }()
 
         public init(
             apiKeyInfoPlistKey: String = "RCApiKey",
@@ -43,7 +48,7 @@ public final class SubscriptionStore: NSObject,
     @Published public private(set) var display: SubscriptionDisplayModel = .empty
     @Published public private(set) var configurationError: SubscriptionError?
 
-    public var onStatusChanged: ((Bool, CustomerInfo?) -> Void)?
+    public var onStatusChanged: (@Sendable (Bool, CustomerInfo?) -> Void)?
 
     public var activePlan: Plan? {
         guard let entitlement = EntitlementResolver.activeEntitlement(
@@ -59,6 +64,7 @@ public final class SubscriptionStore: NSObject,
     let offeringsRepo = OfferingsRepository()
     let executor = PurchaseExecutor()
     private var observer: CustomerInfoObserver?
+    private var refreshTask: Task<Void, Never>?
     private var isConfigured = false
     var config: Configuration?
 
@@ -94,10 +100,14 @@ public final class SubscriptionStore: NSObject,
             self?.applyCustomerInfo(info)
         }
         observer?.start()
-        Task { await refreshStatus() }
+        refreshTask = Task { [weak self] in
+            await self?.refreshStatus()
+        }
     }
 
     public func reset() {
+        refreshTask?.cancel()
+        refreshTask = nil
         observer?.cancel()
         observer = nil
         customerInfo = nil

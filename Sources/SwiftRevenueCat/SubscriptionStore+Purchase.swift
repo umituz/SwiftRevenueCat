@@ -15,18 +15,12 @@ extension SubscriptionStore {
     }
 
     public func purchase(_ package: Package) async -> PurchaseResult {
-        setLoading(true)
-        defer { setLoading(false) }
-
         let result = await executor.purchase(package)
         await refreshStatus()
         return result
     }
 
     public func restorePurchases() async -> RestoreResult {
-        setLoading(true)
-        defer { setLoading(false) }
-
         let result = await executor.restorePurchases()
         await refreshStatus()
         return result

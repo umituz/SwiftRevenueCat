@@ -952,3 +952,114 @@ This document describes every test scenario you should manually verify before re
 - No crash from accessing unconfigured `Purchases.shared`.
 
 **Pass:** Observer handles unconfigured state gracefully.
+
+---
+
+### 14.8 Offerings Refresh After Purchase
+
+**Precondition:** Valid offerings loaded. Subscription not active.
+
+**Steps:**
+1. Complete a purchase via `SubscriptionStore.shared.purchase(plan)`.
+2. Check `SubscriptionStore.shared.offerings` after purchase completes.
+3. Check `SubscriptionStore.shared.plans` after purchase completes.
+
+**Expected:**
+- `offerings` is refreshed (non-nil) after purchase.
+- `plans` array is populated after purchase.
+- `isLoading` transitions `true → false` correctly.
+- No infinite loading state.
+
+**Pass:** Offerings are refreshed as part of the purchase flow.
+
+---
+
+### 14.9 Offerings Refresh After Restore
+
+**Precondition:** Previously subscribed. Fresh install.
+
+**Steps:**
+1. Call `await SubscriptionStore.shared.restorePurchases()`.
+2. Check `offerings` and `plans` after restore completes.
+
+**Expected:**
+- `offerings` is refreshed after restore.
+- `plans` array is populated.
+- `isLoading` transitions `true → false` correctly.
+
+**Pass:** Restore triggers full status and offerings refresh.
+
+---
+
+### 14.10 Reset Cancels In-Flight Refresh
+
+**Precondition:** Store configured. Slow network.
+
+**Steps:**
+1. Configure store (triggers background refresh).
+2. Immediately call `reset()` before refresh completes.
+3. Configure again.
+
+**Expected:**
+- In-flight refresh task is cancelled.
+- No stale data applied from the first configure's refresh.
+- Second configure starts fresh.
+- Console: `"SubscriptionStore reset"` then `"RevenueCat configured successfully"`.
+
+**Pass:** Reset properly cancels in-flight operations.
+
+---
+
+### 14.11 Concurrent Fetch Deduplication
+
+**Precondition:** Store configured.
+
+**Steps:**
+1. Call `fetchOfferings()` from two places simultaneously.
+2. Observe network traffic or console logs.
+
+**Expected:**
+- Only one actual network request to RevenueCat.
+- Both callers receive the same result.
+- Console: `"Offerings fetched successfully"` appears once (not twice).
+
+**Pass:** Concurrent fetch requests are deduplicated via OfferingsRepository.
+
+---
+
+## 15. Keychain Isolation
+
+### 15.1 Keychain Service Identifier
+
+**Precondition:** App uses shared keychain group.
+
+**Steps:**
+1. Subscribe to a plan (creates keychain entry).
+2. Inspect keychain entry attributes.
+
+**Expected:**
+- Entry includes `kSecAttrService = "SwiftRevenueCat"`.
+- Entry is isolated from other apps in the shared keychain group.
+- Other apps using the same account name do not collide.
+
+**Pass:** Keychain entries properly scoped with service identifier.
+
+---
+
+## 16. Concurrency Safety
+
+### 16.1 onStatusChanged Callback Thread Safety
+
+**Precondition:** Subscription active. Callback registered.
+
+**Steps:**
+1. Register a callback: `SubscriptionStore.shared.onStatusChanged = { subscribed, info in ... }`.
+2. Trigger a status change (purchase, restore, etc.).
+3. Verify callback is invoked without threading issues.
+
+**Expected:**
+- Callback is `@Sendable` — no compiler warnings.
+- No data races reported by Thread Sanitizer.
+- Callback receives current `Bool` and `CustomerInfo?`.
+
+**Pass:** Callback is thread-safe across actor boundaries.
