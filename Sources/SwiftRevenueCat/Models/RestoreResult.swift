@@ -1,6 +1,6 @@
 import Foundation
 
-public enum RestoreResult: Sendable {
+public enum RestoreResult: Sendable, Equatable {
     case restored
     case nothingToRestore
     case failed(SubscriptionError)

@@ -18,8 +18,11 @@ public final class SubscriptionStore: NSObject,
         public let entitlementId: String?
 
         private static let defaultManageSubscriptionsURL: URL = {
-            guard let url = URL(string: "https://apps.apple.com/account/subscriptions") else {
-                fatalError("Default manageSubscriptionsURL is invalid — this is a compile-time constant and should never fail")
+            let urlString = "https://apps.apple.com/account/subscriptions"
+            guard let url = URL(string: urlString) else {
+                assertionFailure("Hardcoded URL is invalid — this is a compile-time constant")
+                // Fallback to a URL that is guaranteed to be valid
+                return URL(string: "https://apple.com") ?? URL(fileURLWithPath: "/dev/null")
             }
             return url
         }()
@@ -60,13 +63,13 @@ public final class SubscriptionStore: NSObject,
         }
     }
 
-    let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionStore")
-    let offeringsRepo = OfferingsRepository()
-    let executor = PurchaseExecutor()
+    internal let logger = Logger(subsystem: SwiftRevenueCatConstants.subsystem, category: "SubscriptionStore")
+    internal let offeringsRepo = OfferingsRepository()
+    internal let executor = PurchaseExecutor()
     private var observer: CustomerInfoObserver?
     private var refreshTask: Task<Void, Never>?
     private var isConfigured = false
-    var config: Configuration?
+    internal var config: Configuration?
 
     private override init() {
         super.init()
@@ -121,6 +124,7 @@ public final class SubscriptionStore: NSObject,
         isConfigured = false
         config = nil
         SubscriptionCache.clear()
+        SubscriptionCache.resetCacheKey()
 
         if Purchases.isConfigured {
             Purchases.shared.invalidateCustomerInfoCache()
@@ -183,6 +187,14 @@ public final class SubscriptionStore: NSObject,
     }
 
     func setLoading(_ value: Bool) { isLoading = value }
+
+    func guardIsConfigured(_ operation: StaticString) -> Bool {
+        guard Purchases.isConfigured else {
+            logger.warning("Purchases is not configured yet. Skipping \(operation).")
+            return false
+        }
+        return true
+    }
 
     func updateOfferings(_ value: Offerings?) {
         offerings = value

@@ -4,10 +4,7 @@ import RevenueCat
 extension SubscriptionStore {
 
     public func refreshStatus() async {
-        guard Purchases.isConfigured else {
-            logger.warning("Purchases is not configured yet. Skipping refreshStatus.")
-            return
-        }
+        guard guardIsConfigured(#function) else { return }
 
         setLoading(true)
         defer { setLoading(false) }
@@ -23,10 +20,7 @@ extension SubscriptionStore {
     }
 
     public func fetchOfferings() async {
-        guard Purchases.isConfigured else {
-            logger.warning("Purchases is not configured yet. Skipping fetchOfferings.")
-            return
-        }
+        guard guardIsConfigured(#function) else { return }
         guard !isLoading else { return }
         setLoading(true)
         defer { setLoading(false) }
@@ -42,10 +36,7 @@ extension SubscriptionStore {
     }
 
     public func verifySubscriptionForCriticalOperation() async -> Bool {
-        guard Purchases.isConfigured else {
-            logger.warning("Purchases is not configured yet. Skipping subscription verification.")
-            return false
-        }
+        guard guardIsConfigured(#function) else { return false }
 
         do {
             let info = try await Purchases.shared.customerInfo()
@@ -91,10 +82,7 @@ extension SubscriptionStore {
     public func checkTrialEligibility(
         for productId: String
     ) async -> TrialEligibility {
-        guard Purchases.isConfigured else {
-            logger.warning("Purchases is not configured yet. Skipping checkTrialEligibility.")
-            return .unknown
-        }
+        guard guardIsConfigured(#function) else { return .unknown }
         guard let product = offerings?.current?.availablePackages
             .first(where: { $0.storeProduct.productIdentifier == productId })?
             .storeProduct else {

@@ -4,12 +4,12 @@ import OSLog
 
 enum RCConfigurator {
 
-    private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "RCConfigurator")
+    private static let logger = Logger(subsystem: SwiftRevenueCatConstants.subsystem, category: "RCConfigurator")
 
     @discardableResult
-    static func configure(apiKey: String, delegate: (any PurchasesDelegate)? = nil) -> Bool {
-        guard !apiKey.isEmpty else {
-            logger.error("RevenueCat API key is empty")
+    static func configure(apiKey: String?, delegate: (any PurchasesDelegate)? = nil) -> Bool {
+        guard let apiKey, !apiKey.isEmpty else {
+            logger.error("RevenueCat API key is missing or empty")
             return false
         }
 

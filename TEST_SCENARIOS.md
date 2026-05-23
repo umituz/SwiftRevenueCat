@@ -106,6 +106,23 @@ This document describes every test scenario you should manually verify before re
 
 ## 2. Purchase Flow
 
+### 2.0 Purchase Result Equatable Conformance
+
+**Precondition:** N/A
+
+**Steps:**
+1. Verify `PurchaseResult.success == PurchaseResult.success` compiles.
+2. Verify `RestoreResult.restored == RestoreResult.restored` compiles.
+3. Verify `PurchaseResult.failed(.networkError) == PurchaseResult.failed(.networkError)` compiles.
+
+**Expected:**
+- Both result types conform to `Equatable`.
+- Equality comparisons compile and produce correct results.
+
+**Pass:** Equatable conformance works for all result types.
+
+---
+
 ### 2.1 Successful Purchase via Plan
 
 **Precondition:** Sandbox account configured. Valid offerings loaded.

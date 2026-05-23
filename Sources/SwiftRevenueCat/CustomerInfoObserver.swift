@@ -4,7 +4,7 @@ import OSLog
 
 @MainActor
 final class CustomerInfoObserver {
-    private let logger = Logger(subsystem: "SwiftRevenueCat", category: "CustomerInfoObserver")
+    private let logger = Logger(subsystem: SwiftRevenueCatConstants.subsystem, category: "CustomerInfoObserver")
     private var streamTask: Task<Void, Never>?
     private let updateHandler: (CustomerInfo) -> Void
 

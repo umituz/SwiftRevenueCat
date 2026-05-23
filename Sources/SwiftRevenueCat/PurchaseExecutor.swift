@@ -5,7 +5,7 @@ import OSLog
 
 @MainActor
 final class PurchaseExecutor: PurchaseProviding {
-    private let logger = Logger(subsystem: "SwiftRevenueCat", category: "PurchaseExecutor")
+    private let logger = Logger(subsystem: SwiftRevenueCatConstants.subsystem, category: "PurchaseExecutor")
 
     init() {}
 

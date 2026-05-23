@@ -4,8 +4,8 @@ import Security
 
 enum KeychainStore {
 
-    private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "KeychainStore")
-    private static let serviceIdentifier = "SwiftRevenueCat"
+    private static let logger = Logger(subsystem: SwiftRevenueCatConstants.subsystem, category: "KeychainStore")
+    private static let serviceIdentifier = SwiftRevenueCatConstants.subsystem
 
     @discardableResult
     static func save(data: Data, forAccount account: String) -> Bool {

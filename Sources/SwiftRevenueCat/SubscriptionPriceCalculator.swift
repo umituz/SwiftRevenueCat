@@ -9,7 +9,7 @@ enum SubscriptionPriceCalculator {
         let mostExpensiveId: String?
     }
 
-    private static let maxComparablePrice: Decimal = 999_999_999_999
+    private static let maxComparablePrice = Decimal.greatestFiniteMagnitude
 
     static func analyzeCosts(packages: [Package]) -> CostAnalysis {
         let allProducts = packages.map { $0.storeProduct }

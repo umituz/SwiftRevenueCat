@@ -2,6 +2,7 @@ import Testing
 import Foundation
 @testable import SwiftRevenueCat
 import RevenueCat
+import StoreKit
 
 // MARK: - PeriodConverter
 
@@ -508,18 +509,18 @@ struct SubscriptionErrorMapperTests {
         #expect(result == .purchaseCancelled)
     }
 
-    @Test("maps SKErrorDomain code 0 to purchaseNotAllowed")
-    func skErrorNotAllowed() {
-        let error = NSError(domain: "SKErrorDomain", code: 0, userInfo: nil)
+    @Test("maps SKErrorDomain clientInvalid (code 1) to purchaseNotAllowed")
+    func skErrorClientInvalid() {
+        let error = NSError(domain: "SKErrorDomain", code: SKError.clientInvalid.rawValue, userInfo: nil)
         let result = SubscriptionError.from(error)
         #expect(result == .purchaseNotAllowed)
     }
 
-    @Test("maps SKErrorDomain code 3 to storeProblem")
-    func skErrorStoreProblem() {
-        let error = NSError(domain: "SKErrorDomain", code: 3, userInfo: nil)
+    @Test("maps SKErrorDomain paymentInvalid (code 3) to purchaseNotAllowed")
+    func skErrorPaymentInvalid() {
+        let error = NSError(domain: "SKErrorDomain", code: SKError.paymentInvalid.rawValue, userInfo: nil)
         let result = SubscriptionError.from(error)
-        #expect(result == .storeProblem)
+        #expect(result == .purchaseNotAllowed)
     }
 
     @Test("maps SKErrorDomain unknown code to unknown")

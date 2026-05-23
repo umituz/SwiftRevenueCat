@@ -3,14 +3,6 @@ import RevenueCat
 
 enum SubscriptionDisplayMapper {
 
-    private static let displayDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        formatter.locale = Locale.current
-        return formatter
-    }()
-
     @MainActor
     static func map(
         customerInfo: CustomerInfo?,
@@ -57,7 +49,7 @@ enum SubscriptionDisplayMapper {
     }
 
     private static func formatDate(_ date: Date) -> String {
-        displayDateFormatter.string(from: date)
+        FormatterPool.displayDateFormatter.string(from: date)
     }
 
     private static func mapStore(_ store: Store?) -> String {

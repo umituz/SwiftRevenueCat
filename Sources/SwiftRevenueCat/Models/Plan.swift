@@ -1,7 +1,7 @@
 import Foundation
 import RevenueCat
 
-public struct Plan: Identifiable, Equatable, Hashable {
+public struct Plan: Identifiable, Equatable, Hashable, @unchecked Sendable {
     public let id: String
     public let title: String
     public let price: String

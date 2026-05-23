@@ -4,10 +4,12 @@ import OSLog
 
 @MainActor
 final class OfferingsRepository {
-    private let logger = Logger(subsystem: "SwiftRevenueCat", category: "OfferingsRepository")
+    private let logger = Logger(subsystem: SwiftRevenueCatConstants.subsystem, category: "OfferingsRepository")
     private var fetchTask: Task<Offerings?, Never>?
-    private static let retryDelaySeconds: UInt64 = 2
-    private static var retryDelayNanoseconds: UInt64 { retryDelaySeconds * 1_000_000_000 }
+
+    private static let initialRetryDelay: UInt64 = 1_000_000_000
+    private static let maxRetryDelay: UInt64 = 8_000_000_000
+    private static let maxRetryCount = 2
 
     init() {}
 
@@ -18,33 +20,48 @@ final class OfferingsRepository {
 
         let task = Task<Offerings?, Never> { [weak self] in
             defer { self?.fetchTask = nil }
+            return await self?.performFetchWithRetry()
+        }
 
+        fetchTask = task
+        return await task.value
+    }
+
+    private func performFetchWithRetry() async -> Offerings? {
+        var currentDelay = Self.initialRetryDelay
+
+        for attempt in 0...Self.maxRetryCount {
             do {
                 let offerings = try await Purchases.shared.offerings()
-                self?.logger.info("Offerings fetched successfully")
+                logger.info("Offerings fetched successfully on attempt \(attempt + 1)")
                 return offerings
             } catch {
-                self?.logger.error("Offerings fetch failed: \(error.localizedDescription)")
+                if attempt < Self.maxRetryCount {
+                    let delaySeconds = currentDelay / 1_000_000_000
+                    logger.warning("""
+                    Offerings fetch attempt \(attempt + 1) failed: \
+                    \(error.localizedDescription). Retrying in \(delaySeconds)s
+                    """)
 
-                do {
-                    try await Task.sleep(nanoseconds: Self.retryDelayNanoseconds)
-                } catch {
-                    self?.logger.info("Offerings retry cancelled")
-                    return nil
-                }
+                    do {
+                        try await Task.sleep(nanoseconds: currentDelay)
+                    } catch {
+                        logger.info("Offerings retry sleep cancelled")
+                        return nil
+                    }
 
-                do {
-                    let retried = try await Purchases.shared.offerings()
-                    self?.logger.info("Offerings fetch retry succeeded")
-                    return retried
-                } catch {
-                    self?.logger.error("Offerings fetch retry also failed: \(error.localizedDescription)")
+                    currentDelay = min(currentDelay * 2, Self.maxRetryDelay)
+                } else {
+                    let totalAttempts = Self.maxRetryCount + 1
+                    logger.error("""
+                    Offerings fetch failed after \(totalAttempts) attempts: \
+                    \(error.localizedDescription)
+                    """)
                     return nil
                 }
             }
         }
 
-        fetchTask = task
-        return await task.value
+        return nil
     }
 }

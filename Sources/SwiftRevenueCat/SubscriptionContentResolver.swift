@@ -4,20 +4,10 @@ import OSLog
 
 enum SubscriptionContentResolver {
 
-    private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionContentResolver")
-
-    private static let periodFormatter: DateComponentsFormatter = {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.day, .weekOfMonth, .month, .year]
-        formatter.unitsStyle = .full
-        return formatter
-    }()
-
-    private static let relativeDateFormatter: RelativeDateTimeFormatter = {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter
-    }()
+    private static let logger = Logger(
+        subsystem: SwiftRevenueCatConstants.subsystem,
+        category: "SubscriptionContentResolver"
+    )
 
     static func activePlanDisplayName(
         customerInfo: CustomerInfo?,
@@ -70,7 +60,7 @@ enum SubscriptionContentResolver {
 
     static func formatPeriod(_ period: SubscriptionPeriod) -> String {
         let components = PeriodConverter.toDateComponents(period)
-        return periodFormatter.string(from: components) ?? ""
+        return FormatterPool.periodFormatter.string(from: components) ?? ""
     }
 
     static func buildOfferDescription(
@@ -98,7 +88,7 @@ enum SubscriptionContentResolver {
     }
 
     static func relativeDateString(from date: Date) -> String {
-        relativeDateFormatter.localizedString(for: date, relativeTo: Date())
+        FormatterPool.relativeDateFormatter.localizedString(for: date, relativeTo: Date())
     }
 
     // MARK: - Private

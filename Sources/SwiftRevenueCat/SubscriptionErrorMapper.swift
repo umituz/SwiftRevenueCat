@@ -14,7 +14,7 @@ enum SubscriptionErrorMapper {
         }
 
         let nsError = error as NSError
-        if nsError.domain == "SKErrorDomain" {
+        if nsError.domain == SKErrorDomain {
             return mapSKError(nsError)
         }
 
@@ -77,11 +77,30 @@ enum SubscriptionErrorMapper {
 
     private static func mapSKError(_ nsError: NSError) -> SubscriptionError {
         switch nsError.code {
-        case 0: return .purchaseNotAllowed
-        case 1: return .purchaseNotAllowed
-        case 2: return .purchaseCancelled
-        case 3: return .storeProblem
-        default: return .unknown(nsError.localizedDescription)
+        case SKError.paymentCancelled.rawValue:
+            return .purchaseCancelled
+        case SKError.paymentInvalid.rawValue:
+            return .purchaseNotAllowed
+        case SKError.paymentNotAllowed.rawValue:
+            return .purchaseNotAllowed
+        case SKError.storeProductNotAvailable.rawValue:
+            return .productNotAvailable
+        case SKError.cloudServiceNetworkConnectionFailed.rawValue:
+            return .networkError
+        case SKError.clientInvalid.rawValue:
+            return .purchaseNotAllowed
+        case SKError.cloudServicePermissionDenied.rawValue, SKError.cloudServiceRevoked.rawValue:
+            return .networkError
+        case SKError.privacyAcknowledgementRequired.rawValue:
+            return .purchaseNotAllowed
+        case SKError.unauthorizedRequestData.rawValue,
+             SKError.invalidOfferIdentifier.rawValue,
+             SKError.invalidOfferPrice.rawValue,
+             SKError.invalidSignature.rawValue,
+             SKError.missingOfferParams.rawValue:
+            return .storeProblem
+        default:
+            return .unknown(nsError.localizedDescription)
         }
     }
 }

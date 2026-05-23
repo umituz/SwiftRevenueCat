@@ -15,17 +15,19 @@ enum SubscriptionCache {
         let hash: String
     }
 
-    private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionCache")
+    private static let logger = Logger(subsystem: SwiftRevenueCatConstants.subsystem, category: "SubscriptionCache")
 
-    private static let queue = DispatchQueue(label: "SwiftRevenueCat.SubscriptionCache")
+    private static let synchronizationQueue = DispatchQueue(
+        label: "\(SwiftRevenueCatConstants.subsystem).SubscriptionCache"
+    )
     private static var _cacheKey: String = "subscription_status_cache"
 
     private static var cacheKey: String {
-        queue.sync { _cacheKey }
+        synchronizationQueue.sync { _cacheKey }
     }
 
     static func configure(cacheKey: String) {
-        queue.sync { _cacheKey = cacheKey }
+        synchronizationQueue.sync { _cacheKey = cacheKey }
     }
 
     static func save(isSubscribed: Bool, expirationDate: Date? = nil) {
@@ -70,6 +72,10 @@ enum SubscriptionCache {
 
     static func clear() {
         KeychainStore.delete(account: cacheKey)
+    }
+
+    static func resetCacheKey() {
+        synchronizationQueue.sync { _cacheKey = "subscription_status_cache" }
     }
 
     // MARK: - Entry Loading with Integrity Verification

@@ -1,6 +1,6 @@
 import Foundation
 
-public enum PurchaseResult: Sendable {
+public enum PurchaseResult: Sendable, Equatable {
     case success
     case cancelled
     case notEntitled
