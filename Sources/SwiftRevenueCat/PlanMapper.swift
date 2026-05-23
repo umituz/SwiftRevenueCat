@@ -1,10 +1,7 @@
 import Foundation
 import RevenueCat
-import OSLog
 
 enum PlanMapper {
-
-    private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "PlanMapper")
 
     static func mapPlans(from offerings: Offerings?) -> [Plan] {
         guard let packages = offerings?.current?.availablePackages,
@@ -12,40 +9,33 @@ enum PlanMapper {
             return []
         }
 
-        let allProducts = packages.map { $0.storeProduct }
+        let costAnalysis = SubscriptionPriceCalculator.analyzeCosts(packages: packages)
 
-        return packages
-            .sorted { $0.storeProduct.price < $1.storeProduct.price }
-            .map { package in
-                mapPlan(from: package, allProducts: allProducts)
-            }
+        return packages.map { package in
+            mapPlan(from: package, costAnalysis: costAnalysis)
+        }
     }
+
+    // MARK: - Private
 
     private static func mapPlan(
         from package: Package,
-        allProducts: [StoreProduct]
+        costAnalysis: SubscriptionPriceCalculator.CostAnalysis
     ) -> Plan {
         let product = package.storeProduct
         let period = SubscriptionContentResolver.periodLabel(from: product)
+        let productId = product.productIdentifier
 
-        let badge: String? = {
-            switch package.packageType {
-            case .annual: return SubscriptionL10n.bestValue
-            case .weekly: return SubscriptionL10n.mostPopular
-            case .lifetime: return SubscriptionL10n.oneTime
-            default: return nil
-            }
-        }()
+        let badge = PlanBadgeResolver.resolve(
+            productId: productId,
+            bestValueId: costAnalysis.bestValueId,
+            packageType: package.packageType
+        )
 
-        let savingsText: String? = {
-            if package.packageType == .annual {
-                return SubscriptionContentResolver.savingsPercentage(
-                    annualProduct: product,
-                    allProducts: allProducts
-                )
-            }
-            return nil
-        }()
+        let savingsText = SubscriptionPriceCalculator.savingsText(
+            productId: productId,
+            costAnalysis: costAnalysis
+        )
 
         let discount = product.introductoryDiscount
         let hasFreeTrial = discount?.paymentMode == .freeTrial
@@ -53,7 +43,7 @@ enum PlanMapper {
             SubscriptionContentResolver.formatPeriod($0.subscriptionPeriod)
         }
         let introductoryPrice = discount.map {
-            $0.paymentMode == .freeTrial ? SubscriptionL10n.freePlan : $0.localizedPriceString
+            OfferPriceResolver.introductoryPriceString(from: $0)
         }
         let offerDescription = discount.flatMap {
             SubscriptionContentResolver.buildOfferDescription(
@@ -69,12 +59,12 @@ enum PlanMapper {
             period: period,
             badge: badge,
             packageType: package.packageType,
-            package: package,
             savingsText: savingsText,
             hasFreeTrial: hasFreeTrial,
             trialPeriod: trialPeriod,
             introductoryPrice: introductoryPrice,
-            offerDescription: offerDescription
+            offerDescription: offerDescription,
+            revenueCatPackage: package
         )
     }
 }

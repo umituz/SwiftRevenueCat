@@ -10,6 +10,10 @@ import AppKit
 
 extension SubscriptionStore {
 
+    public func purchase(_ plan: Plan) async -> PurchaseResult {
+        await purchase(plan.revenueCatPackage)
+    }
+
     public func purchase(_ package: Package) async -> PurchaseResult {
         setLoading(true)
         defer { setLoading(false) }
@@ -29,9 +33,10 @@ extension SubscriptionStore {
     }
 
     public func manageSubscription() {
-        let urlString = config?.manageSubscriptionsURL
-            ?? "https://apps.apple.com/account/subscriptions"
-        guard let url = URL(string: urlString) else { return }
+        guard let url = config?.manageSubscriptionsURL else {
+            logger.error("manageSubscriptionsURL is not configured")
+            return
+        }
 
         #if canImport(UIKit)
         UIApplication.shared.open(url)
@@ -42,26 +47,25 @@ extension SubscriptionStore {
 
     public func presentCodeRedemptionSheet() {
         #if canImport(UIKit) && !os(visionOS)
-        if #available(iOS 14.0, *) {
-            SKPaymentQueue.default().presentCodeRedemptionSheet()
-        }
+        SKPaymentQueue.default().presentCodeRedemptionSheet()
         #endif
     }
 
     @discardableResult
     public func logIn(_ userId: String) async throws -> Bool {
+        guard Purchases.isConfigured else {
+            throw SubscriptionError.notConfigured
+        }
         let (customerInfo, created) = try await Purchases.shared.logIn(userId)
         applyCustomerInfo(customerInfo)
         return created
     }
 
-    public func logOut() async {
-        do {
-            let customerInfo = try await Purchases.shared.logOut()
-            applyCustomerInfo(customerInfo)
-        } catch {
-            logger.error("RevenueCat logout failed: \(error.localizedDescription)")
-            reset()
+    public func logOut() async throws {
+        guard Purchases.isConfigured else {
+            throw SubscriptionError.notConfigured
         }
+        let customerInfo = try await Purchases.shared.logOut()
+        applyCustomerInfo(customerInfo)
     }
 }

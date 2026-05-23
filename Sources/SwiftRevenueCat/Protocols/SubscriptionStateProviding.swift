@@ -3,7 +3,7 @@ import RevenueCat
 
 @MainActor
 public protocol SubscriptionStateProviding: AnyObject {
-    var isPro: Bool { get }
+    var isSubscribed: Bool { get }
     var isLoading: Bool { get }
     var offerings: Offerings? { get }
     var customerInfo: CustomerInfo? { get }

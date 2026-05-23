@@ -12,7 +12,7 @@ public enum EntitlementResolver {
         return info.entitlements.active.first?.value
     }
 
-    public static func isPro(from info: CustomerInfo?, entitlementId: String? = nil) -> Bool {
+    public static func hasActiveEntitlement(from info: CustomerInfo?, entitlementId: String? = nil) -> Bool {
         activeEntitlement(from: info, entitlementId: entitlementId) != nil
     }
 }

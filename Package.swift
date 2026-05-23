@@ -14,7 +14,7 @@ let package = Package(
             targets: ["SwiftRevenueCat"])
     ],
     dependencies: [
-        .package(url: "https://github.com/RevenueCat/purchases-ios-spm", from: "5.70.0")
+        .package(url: "https://github.com/RevenueCat/purchases-ios-spm", "5.73.0"..<"5.75.0")
     ],
     targets: [
         .target(

@@ -15,6 +15,11 @@ final class CustomerInfoObserver {
     func start() {
         cancel()
 
+        guard Purchases.isConfigured else {
+            logger.warning("Purchases is not configured. CustomerInfoObserver will not start.")
+            return
+        }
+
         streamTask = Task { [weak self] in
             guard let self else { return }
 

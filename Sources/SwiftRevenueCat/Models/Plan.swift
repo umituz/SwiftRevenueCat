@@ -8,12 +8,13 @@ public struct Plan: Identifiable, Equatable, Hashable {
     public let period: String
     public let badge: String?
     public let packageType: PackageType
-    public let package: Package?
     public let savingsText: String?
     public let hasFreeTrial: Bool
     public let trialPeriod: String?
     public let introductoryPrice: String?
     public let offerDescription: String?
+
+    let revenueCatPackage: Package
 
     public init(
         id: String,
@@ -22,12 +23,12 @@ public struct Plan: Identifiable, Equatable, Hashable {
         period: String,
         badge: String?,
         packageType: PackageType,
-        package: Package?,
         savingsText: String?,
         hasFreeTrial: Bool = false,
         trialPeriod: String? = nil,
         introductoryPrice: String? = nil,
-        offerDescription: String? = nil
+        offerDescription: String? = nil,
+        revenueCatPackage: Package
     ) {
         self.id = id
         self.title = title
@@ -35,12 +36,12 @@ public struct Plan: Identifiable, Equatable, Hashable {
         self.period = period
         self.badge = badge
         self.packageType = packageType
-        self.package = package
         self.savingsText = savingsText
         self.hasFreeTrial = hasFreeTrial
         self.trialPeriod = trialPeriod
         self.introductoryPrice = introductoryPrice
         self.offerDescription = offerDescription
+        self.revenueCatPackage = revenueCatPackage
     }
 
     public static func == (lhs: Plan, rhs: Plan) -> Bool {

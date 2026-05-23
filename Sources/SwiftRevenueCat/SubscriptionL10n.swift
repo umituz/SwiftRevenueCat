@@ -8,18 +8,14 @@ public enum SubscriptionL10n {
         String(localized: "subscription.badge.best_value", defaultValue: "Best Value")
     }
 
-    public static var mostPopular: String {
-        String(localized: "subscription.badge.most_popular", defaultValue: "Most Popular")
-    }
-
     public static var oneTime: String {
         String(localized: "subscription.badge.one_time", defaultValue: "One Time")
     }
 
-    // MARK: - Plan Names
+    // MARK: - Tier Names
 
-    public static var freePlan: String {
-        String(localized: "subscription.plan.free", defaultValue: "Free")
+    public static var freeTier: String {
+        String(localized: "subscription.tier.free", defaultValue: "Free")
     }
 
     // MARK: - Period Labels
@@ -57,20 +53,7 @@ public enum SubscriptionL10n {
         )
     }
 
-    // MARK: - Permission Errors
-
-    public static func freeLimitReached(
-        current: Int,
-        limit: Int,
-        type: String
-    ) -> String {
-        String(
-            localized: "subscription.error.free_limit",
-            defaultValue: "\(current)/\(limit) \(type) limit reached. Upgrade to Pro for unlimited."
-        )
-    }
-
-    // MARK: - Subscription Errors
+    // MARK: - Error Messages
 
     public static var errorNetwork: String {
         String(
@@ -128,6 +111,8 @@ public enum SubscriptionL10n {
         )
     }
 
+    // MARK: - Store Names
+
     public static var storeAppStore: String {
         String(
             localized: "subscription.store.app_store",
@@ -160,22 +145,6 @@ public enum SubscriptionL10n {
         String(
             localized: "subscription.store.promotional",
             defaultValue: "Promotional"
-        )
-    }
-
-    public static var purchasesDisabled: String {
-        String(
-            localized: "subscription.error.purchases_disabled",
-            defaultValue: "In-app purchases are restricted on this device."
-        )
-    }
-
-    // MARK: - Defaults
-
-    public static var defaultItemName: String {
-        String(
-            localized: "subscription.default.item_name",
-            defaultValue: "items"
         )
     }
 }

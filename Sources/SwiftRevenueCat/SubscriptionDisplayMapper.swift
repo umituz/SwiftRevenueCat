@@ -1,15 +1,13 @@
 import Foundation
 import RevenueCat
-import OSLog
 
 enum SubscriptionDisplayMapper {
-
-    private static let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionDisplayMapper")
 
     private static let displayDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
+        formatter.locale = Locale.current
         return formatter
     }()
 
@@ -25,19 +23,21 @@ enum SubscriptionDisplayMapper {
             from: info,
             entitlementId: entitlementId
         )
-        let proActive = entitlement != nil
-        let isLifetime = proActive && entitlement?.expirationDate == nil
+        let subscribed = entitlement != nil
+        let isLifetime = subscribed && entitlement?.expirationDate == nil
 
         return SubscriptionDisplayModel(
-            isPro: proActive,
+            isSubscribed: subscribed,
             isLifetime: isLifetime,
             planName: SubscriptionContentResolver.activePlanDisplayName(
                 customerInfo: info,
-                offerings: offerings
+                offerings: offerings,
+                entitlementId: entitlementId
             ),
             priceText: SubscriptionContentResolver.activePlanPriceText(
                 customerInfo: info,
-                offerings: offerings
+                offerings: offerings,
+                entitlementId: entitlementId
             ),
             expirationDate: entitlement.flatMap {
                 $0.expirationDate.map { formatDate($0) }
@@ -46,10 +46,13 @@ enum SubscriptionDisplayMapper {
                 $0.latestPurchaseDate.map { formatDate($0) }
             },
             storeName: mapStore(entitlement?.store),
-            isSandbox: entitlement?.isSandbox ?? false,
-            willRenew: isLifetime ? false : (entitlement?.willRenew ?? false),
-            isInBillingRetryPeriod: (entitlement?.billingIssueDetectedAt != nil)
-                && (entitlement?.willRenew ?? false)
+            willRenew: SubscriptionRenewalResolver.willRenew(
+                isLifetime: isLifetime,
+                entitlement: entitlement
+            ),
+            isInBillingRetryPeriod: SubscriptionRenewalResolver.isInBillingRetry(
+                entitlement: entitlement
+            )
         )
     }
 

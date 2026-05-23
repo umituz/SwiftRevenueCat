@@ -1,5 +1,4 @@
 import Foundation
-import RevenueCat
 
 public enum SubscriptionError: LocalizedError, Sendable {
     case networkError
@@ -10,7 +9,9 @@ public enum SubscriptionError: LocalizedError, Sendable {
     case receiptInUse
     case paymentPending
     case insufficientPermissions
-    case configurationError(String)
+    case apiKeyInvalid
+    case apiKeyMissing
+    case notConfigured
     case unknown(String)
 
     public var errorDescription: String? {
@@ -31,53 +32,39 @@ public enum SubscriptionError: LocalizedError, Sendable {
             return SubscriptionL10n.errorPaymentPending
         case .insufficientPermissions:
             return SubscriptionL10n.errorNotAllowed
-        case .configurationError(let message):
-            return message
+        case .apiKeyInvalid:
+            return SubscriptionL10n.errorInvalidApiKey
+        case .apiKeyMissing:
+            return SubscriptionL10n.errorConfigMissingApiKey
+        case .notConfigured:
+            return SubscriptionL10n.errorConfigMissingApiKey
         case .unknown(let message):
             return message
         }
     }
 
     public static func from(_ error: Error) -> SubscriptionError {
-        if let rcError = error as? ErrorCode {
-            switch rcError {
-            case .purchaseCancelledError:
-                return .purchaseCancelled
-            case .networkError:
-                return .networkError
-            case .purchaseNotAllowedError:
-                return .purchaseNotAllowed
-            case .storeProblemError:
-                return .storeProblem
-            case .productNotAvailableForPurchaseError:
-                return .productNotAvailable
-            case .receiptAlreadyInUseError, .receiptInUseByOtherSubscriberError:
-                return .receiptInUse
-            case .paymentPendingError:
-                return .paymentPending
-            case .insufficientPermissionsError:
-                return .insufficientPermissions
-            case .invalidCredentialsError, .configurationError:
-                return .configurationError(SubscriptionL10n.errorInvalidApiKey)
-            case .offlineConnectionError:
-                return .networkError
-            case .productRequestTimedOut:
-                return .networkError
-            case .purchaseInvalidError:
-                return .storeProblem
-            case .productAlreadyPurchasedError:
-                return .receiptInUse
-            default:
-                return .unknown(error.localizedDescription)
-            }
-        }
+        SubscriptionErrorMapper.map(error)
+    }
+}
 
-        let nsError = error as NSError
-        if nsError.domain == "SKErrorDomain" && nsError.code == 2 {
-            return .purchaseCancelled
+extension SubscriptionError: Equatable {
+    public static func == (lhs: SubscriptionError, rhs: SubscriptionError) -> Bool {
+        switch (lhs, rhs) {
+        case (.networkError, .networkError): return true
+        case (.purchaseCancelled, .purchaseCancelled): return true
+        case (.purchaseNotAllowed, .purchaseNotAllowed): return true
+        case (.storeProblem, .storeProblem): return true
+        case (.productNotAvailable, .productNotAvailable): return true
+        case (.receiptInUse, .receiptInUse): return true
+        case (.paymentPending, .paymentPending): return true
+        case (.insufficientPermissions, .insufficientPermissions): return true
+        case (.apiKeyInvalid, .apiKeyInvalid): return true
+        case (.apiKeyMissing, .apiKeyMissing): return true
+        case (.notConfigured, .notConfigured): return true
+        case (.unknown(let a), .unknown(let b)): return a == b
+        default: return false
         }
-
-        return .unknown(error.localizedDescription)
     }
 }
 
@@ -92,7 +79,9 @@ extension SubscriptionError: CustomStringConvertible {
         case .receiptInUse: return "SubscriptionError.receiptInUse"
         case .paymentPending: return "SubscriptionError.paymentPending"
         case .insufficientPermissions: return "SubscriptionError.insufficientPermissions"
-        case .configurationError(let msg): return "SubscriptionError.configurationError(\(msg))"
+        case .apiKeyInvalid: return "SubscriptionError.apiKeyInvalid"
+        case .apiKeyMissing: return "SubscriptionError.apiKeyMissing"
+        case .notConfigured: return "SubscriptionError.notConfigured"
         case .unknown(let msg): return "SubscriptionError.unknown(\(msg))"
         }
     }

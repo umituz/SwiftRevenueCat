@@ -12,6 +12,6 @@ extension Plan {
         if let offerDescription {
             return offerDescription
         }
-        return "\(price)\(period)"
+        return "\(price) \(period)"
     }
 }

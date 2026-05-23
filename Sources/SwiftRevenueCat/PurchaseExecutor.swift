@@ -10,6 +10,10 @@ final class PurchaseExecutor: PurchaseProviding {
     init() {}
 
     func purchase(_ package: Package) async -> PurchaseResult {
+        guard Purchases.isConfigured else {
+            logger.error("Purchases is not configured. Cannot perform purchase.")
+            return .failed(.notConfigured)
+        }
         guard canMakePayments() else {
             logger.warning("Device cannot make payments - restrictions enabled")
             return .failed(.purchaseNotAllowed)
@@ -25,7 +29,7 @@ final class PurchaseExecutor: PurchaseProviding {
                 return .cancelled
             }
 
-            let isEntitled = EntitlementResolver.isPro(from: result.customerInfo)
+            let isEntitled = EntitlementResolver.hasActiveEntitlement(from: result.customerInfo)
 
             if isEntitled {
                 logger.info("Purchase successful and entitled")
@@ -48,17 +52,21 @@ final class PurchaseExecutor: PurchaseProviding {
     }
 
     func restorePurchases() async -> RestoreResult {
+        guard Purchases.isConfigured else {
+            logger.error("Purchases is not configured. Cannot perform restore.")
+            return .failed(.notConfigured)
+        }
         logger.info("Starting restore purchases")
 
         do {
             let info = try await Purchases.shared.restorePurchases()
-            let isEntitled = EntitlementResolver.isPro(from: info)
+            let isEntitled = EntitlementResolver.hasActiveEntitlement(from: info)
 
             if isEntitled {
-                logger.info("Restore successful - Pro status found")
+                logger.info("Restore successful - subscription found")
                 return .restored
             } else {
-                logger.info("Restore finished - No Pro status found")
+                logger.info("Restore finished - no subscription found")
                 return .nothingToRestore
             }
         } catch {

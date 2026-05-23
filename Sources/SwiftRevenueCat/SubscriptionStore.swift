@@ -13,26 +13,28 @@ public final class SubscriptionStore: NSObject,
 
     public struct Configuration {
         public let apiKeyInfoPlistKey: String
-        public let proStatusCacheKey: String
-        public let manageSubscriptionsURL: String
+        public let subscriptionCacheKey: String
+        public let manageSubscriptionsURL: URL
         public let entitlementId: String?
+
+        private static let defaultManageSubscriptionsURL = URL(string: "https://apps.apple.com/account/subscriptions")!
 
         public init(
             apiKeyInfoPlistKey: String = "RCApiKey",
-            proStatusCacheKey: String = "pro_status_cache",
-            manageSubscriptionsURL: String = "https://apps.apple.com/account/subscriptions",
+            subscriptionCacheKey: String = "subscription_status_cache",
+            manageSubscriptionsURL: URL? = nil,
             entitlementId: String? = nil
         ) {
             self.apiKeyInfoPlistKey = apiKeyInfoPlistKey
-            self.proStatusCacheKey = proStatusCacheKey
-            self.manageSubscriptionsURL = manageSubscriptionsURL
+            self.subscriptionCacheKey = subscriptionCacheKey
+            self.manageSubscriptionsURL = manageSubscriptionsURL ?? Self.defaultManageSubscriptionsURL
             self.entitlementId = entitlementId
         }
     }
 
     public static let shared = SubscriptionStore()
 
-    @Published public private(set) var isPro: Bool = false
+    @Published public private(set) var isSubscribed: Bool = false
     @Published public private(set) var isLoading: Bool = false
     @Published public private(set) var offerings: Offerings?
     @Published public private(set) var plans: [Plan] = []
@@ -49,11 +51,10 @@ public final class SubscriptionStore: NSObject,
             entitlementId: config?.entitlementId
         ) else { return nil }
         return plans.first {
-            $0.package?.storeProduct.productIdentifier == entitlement.productIdentifier
+            $0.revenueCatPackage.storeProduct.productIdentifier == entitlement.productIdentifier
         }
     }
 
-    // Internal access required for extensions in SubscriptionStore+Fetch/Purchase
     let logger = Logger(subsystem: "SwiftRevenueCat", category: "SubscriptionStore")
     let offeringsRepo = OfferingsRepository()
     let executor = PurchaseExecutor()
@@ -65,6 +66,8 @@ public final class SubscriptionStore: NSObject,
         super.init()
     }
 
+    // MARK: - Configuration
+
     public func configure(with config: Configuration = Configuration()) {
         guard !isConfigured else {
             logger.warning("SubscriptionStore already configured - ignoring duplicate call")
@@ -72,20 +75,21 @@ public final class SubscriptionStore: NSObject,
         }
         self.config = config
 
-        ProStatusCache.configure(cacheKey: config.proStatusCacheKey)
+        SubscriptionCache.configure(cacheKey: config.subscriptionCacheKey)
 
         let apiKey = SubscriptionAPIKeyProvider.apiKey(from: config.apiKeyInfoPlistKey)
         let success = RCConfigurator.configure(apiKey: apiKey, delegate: self)
         guard success else {
-            configurationError = .configurationError(
-                SubscriptionL10n.errorConfigMissingApiKey
-            )
+            configurationError = .apiKeyMissing
             logger.error("RevenueCat configuration failed - API key missing")
             return
         }
 
         isConfigured = true
         configurationError = nil
+
+        restoreFromCacheIfAvailable()
+
         observer = CustomerInfoObserver { [weak self] info in
             self?.applyCustomerInfo(info)
         }
@@ -93,25 +97,44 @@ public final class SubscriptionStore: NSObject,
         Task { await refreshStatus() }
     }
 
+    public func reset() {
+        observer?.cancel()
+        observer = nil
+        customerInfo = nil
+        isSubscribed = false
+        isLoading = false
+        offerings = nil
+        plans = []
+        hasVerifiedWithServer = false
+        display = .empty
+        configurationError = nil
+        isConfigured = false
+        config = nil
+        SubscriptionCache.clear()
+
+        if Purchases.isConfigured {
+            Purchases.shared.invalidateCustomerInfoCache()
+        }
+        logger.info("SubscriptionStore reset")
+    }
+
+    // MARK: - CustomerInfo Application
+
     func applyCustomerInfo(_ info: CustomerInfo) {
         let entitlement = EntitlementResolver.activeEntitlement(
             from: info,
             entitlementId: config?.entitlementId
         )
-        let proActive = entitlement != nil
+        let subscribed = entitlement != nil
         self.customerInfo = info
-        self.isPro = proActive
+        self.isSubscribed = subscribed
         self.hasVerifiedWithServer = true
 
-        ProStatusCache.save(isPro: proActive, expirationDate: entitlement?.expirationDate)
+        SubscriptionCache.save(isSubscribed: subscribed, expirationDate: entitlement?.expirationDate)
 
         updateDisplay()
-
-        let status = proActive ? "PRO" : "FREE"
-        let product = entitlement?.productIdentifier ?? "none"
-        logger.info("Subscription updated: \(status), entitlement: \(product)")
-
-        onStatusChanged?(proActive, info)
+        logSubscriptionUpdate(subscribed: subscribed, productIdentifier: entitlement?.productIdentifier)
+        onStatusChanged?(subscribed, info)
     }
 
     func updateDisplay() {
@@ -122,13 +145,15 @@ public final class SubscriptionStore: NSObject,
         )
     }
 
+    // MARK: - Status
+
     public func getStatus() -> SubscriptionStatus {
         let activeEntitlement = EntitlementResolver.activeEntitlement(
             from: customerInfo,
             entitlementId: config?.entitlementId
         )
         return SubscriptionStatus(
-            isPro: isPro,
+            isSubscribed: isSubscribed,
             expirationDate: activeEntitlement?.expirationDate,
             isActive: isSubscriptionActive()
         )
@@ -139,29 +164,32 @@ public final class SubscriptionStore: NSObject,
         return SubscriptionContentResolver.relativeDateString(from: date)
     }
 
-    public func reset() {
-        observer?.cancel()
-        observer = nil
-        customerInfo = nil
-        isPro = false
-        isLoading = false
-        offerings = nil
-        plans = []
-        hasVerifiedWithServer = false
-        display = .empty
-        configurationError = nil
-        isConfigured = false
-        config = nil
-        ProStatusCache.clear()
-        logger.info("SubscriptionStore reset")
+    // MARK: - Internal Setters
+
+    private func restoreFromCacheIfAvailable() {
+        guard SubscriptionCache.loadSubscribedStatus() else { return }
+        isSubscribed = true
+        logger.info("Restored subscribed status from offline cache")
     }
 
-    // MARK: - Internal Setters (for extensions across files)
-
     func setLoading(_ value: Bool) { isLoading = value }
+
     func updateOfferings(_ value: Offerings?) {
         offerings = value
         plans = PlanMapper.mapPlans(from: value)
+    }
+
+    // MARK: - Logging
+
+    private func logSubscriptionUpdate(subscribed: Bool, productIdentifier: String?) {
+        let status: String
+        if subscribed {
+            status = "SUBSCRIBED"
+        } else {
+            status = "FREE"
+        }
+        let product = productIdentifier ?? "none"
+        logger.info("Subscription updated: \(status), entitlement: \(product)")
     }
 
     // MARK: - PurchasesDelegate

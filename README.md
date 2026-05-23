@@ -7,16 +7,17 @@ A shared Swift package providing reusable RevenueCat subscription infrastructure
 - Dynamic entitlement resolution (no hardcoded entitlement keys)
 - Centralized subscription state management (`SubscriptionStore`)
 - Offerings fetching with deduplication and retry
-- Keychain-based Pro status caching (`ProStatusCache`)
+- Keychain-based subscription cache (`SubscriptionCache`)
 - Real-time CustomerInfo updates via stream observer
 - Purchase and restore operations with clean result types
-- Permission gateway for feature gating
 - Lifetime (non-consumable) purchase support
 - Subscription display model mapping for Settings UI
+- Data-driven plan display — badges, savings, and ordering all derived from RevenueCat data
 
 ## Requirements
 
 - iOS 17.0+
+- macOS 14.0+
 - Swift 5.9+
 - Xcode 15+
 
@@ -72,18 +73,25 @@ struct MyApp: App {
 }
 ```
 
-### 3. Check Pro Status
+### 3. Check Subscription Status
 
 ```swift
-if SubscriptionStore.shared.isPro {
+if SubscriptionStore.shared.isSubscribed {
     // Show premium features
 }
 ```
 
-### 4. Optional: Status Change Callback
+### 4. Purchase a Plan
 
 ```swift
-SubscriptionStore.shared.onStatusChanged = { isPro, customerInfo in
+let plan = store.plans.first { $0.isAnnual }
+let result = await store.purchase(plan)
+```
+
+### 5. Optional: Status Change Callback
+
+```swift
+SubscriptionStore.shared.onStatusChanged = { isSubscribed, customerInfo in
     // CloudKit sync, analytics, etc.
 }
 ```
@@ -98,10 +106,9 @@ SubscriptionStore (central @MainActor singleton)
   ├── OfferingsRepository (fetch + retry + dedup)
   ├── PurchaseExecutor (purchase/restore)
   ├── EntitlementResolver (dynamic entitlement detection)
-  ├── PlanMapper (Package -> Plan)
-  ├── ProStatusCache (Keychain)
+  ├── PlanMapper (Package -> Plan, data-driven badges & savings)
+  ├── SubscriptionCache (Keychain)
   ├── SubscriptionDisplayMapper (UI display model)
-  ├── PermissionGateway (feature gating)
   └── SubscriptionContentResolver (display content)
 ```
 
@@ -117,23 +124,29 @@ SubscriptionStore (central @MainActor singleton)
 
 | Model | Purpose |
 |-------|---------|
-| `Plan` | UI representation of a subscription plan |
+| `Plan` | UI representation of a subscription plan (RevenueCat internals hidden) |
 | `PurchaseResult` | Purchase outcome (success/cancelled/failed) |
 | `RestoreResult` | Restore outcome (restored/nothing/failed) |
 | `SubscriptionStatus` | Subscription status snapshot |
-| `PermissionResult` | Feature permission check result |
 | `SubscriptionDisplayModel` | Settings UI display model |
+| `TrialEligibility` | Trial eligibility check result |
 
-## Key Design Principle
+## Key Design Principles
 
 **No hardcoded strings.** Entitlement names, offering names, and package types are all resolved dynamically from the SDK.
+
+**Data-driven plan display.** Badges, savings percentages, and plan ordering all come from RevenueCat data — no assumptions about which plan types exist.
+
+**Clean API surface.** Purchase via `store.purchase(plan)` — no need to access RevenueCat `Package` type directly.
+
+**Generic terminology.** Uses `isSubscribed` instead of app-specific tier names like "Pro" or "Premium".
 
 ```swift
 // WRONG
 let proActive = info.entitlements["Pro Access"]?.isActive == true
 
 // CORRECT (automatic detection)
-let proActive = EntitlementResolver.isPro(from: info)
+let subscribed = EntitlementResolver.hasActiveEntitlement(from: info)
 ```
 
 ## License

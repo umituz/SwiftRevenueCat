@@ -6,6 +6,8 @@ import OSLog
 final class OfferingsRepository {
     private let logger = Logger(subsystem: "SwiftRevenueCat", category: "OfferingsRepository")
     private var fetchTask: Task<Offerings?, Never>?
+    private static let retryDelaySeconds: UInt64 = 2
+    private static var retryDelayNanoseconds: UInt64 { retryDelaySeconds * 1_000_000_000 }
 
     init() {}
 
@@ -25,7 +27,7 @@ final class OfferingsRepository {
                 self?.logger.error("Offerings fetch failed: \(error.localizedDescription)")
 
                 do {
-                    try await Task.sleep(nanoseconds: 2_000_000_000)
+                    try await Task.sleep(nanoseconds: Self.retryDelayNanoseconds)
                 } catch {
                     self?.logger.info("Offerings retry cancelled")
                     return nil
@@ -36,7 +38,7 @@ final class OfferingsRepository {
                     self?.logger.info("Offerings fetch retry succeeded")
                     return retried
                 } catch {
-                    self?.logger.error("Offerings fetch retry also failed")
+                    self?.logger.error("Offerings fetch retry also failed: \(error.localizedDescription)")
                     return nil
                 }
             }

@@ -4,6 +4,10 @@ import RevenueCat
 extension SubscriptionStore {
 
     public func refreshStatus() async {
+        guard Purchases.isConfigured else {
+            logger.warning("Purchases is not configured yet. Skipping refreshStatus.")
+            return
+        }
         do {
             let info = try await Purchases.shared.customerInfo()
             applyCustomerInfo(info)
@@ -14,6 +18,10 @@ extension SubscriptionStore {
     }
 
     public func fetchOfferings() async {
+        guard Purchases.isConfigured else {
+            logger.warning("Purchases is not configured yet. Skipping fetchOfferings.")
+            return
+        }
         guard !isLoading else { return }
         setLoading(true)
         defer { setLoading(false) }
@@ -24,9 +32,9 @@ extension SubscriptionStore {
         }
     }
 
-    public func verifyProStatusForCriticalOperation() async -> Bool {
-        guard ProStatusCache.load() else {
-            logger.info("Pro status cache check failed - user not pro")
+    public func verifySubscriptionForCriticalOperation() async -> Bool {
+        guard Purchases.isConfigured else {
+            logger.warning("Purchases is not configured yet. Skipping subscription verification.")
             return false
         }
 
@@ -36,35 +44,32 @@ extension SubscriptionStore {
                 from: info,
                 entitlementId: config?.entitlementId
             )
-            let isActuallyPro = entitlement != nil
+            let isSubscribed = entitlement != nil
 
-            if isActuallyPro {
-                ProStatusCache.save(isPro: true, expirationDate: entitlement?.expirationDate)
-                applyCustomerInfo(info)
-                logger.info("Pro status verified for critical operation")
+            SubscriptionCache.save(
+                isSubscribed: isSubscribed,
+                expirationDate: entitlement?.expirationDate
+            )
+
+            if isSubscribed {
+                logger.info("Subscription verified for critical operation")
             } else {
-                ProStatusCache.save(isPro: false, expirationDate: nil)
-                applyCustomerInfo(info)
-                logger.warning("Pro status cache invalid - user not actually pro")
+                logger.warning("No active subscription found for critical operation")
             }
 
-            return isActuallyPro
+            applyCustomerInfo(info)
+            return isSubscribed
         } catch {
-            logger.error("Failed to verify pro status: \(error.localizedDescription)")
+            logger.error("Failed to verify subscription: \(error.localizedDescription)")
             return false
         }
     }
 
     public func isSubscriptionActive() -> Bool {
-        let entitlement = EntitlementResolver.activeEntitlement(
+        EntitlementResolver.hasActiveEntitlement(
             from: customerInfo,
             entitlementId: config?.entitlementId
         )
-        guard let entitlement else { return false }
-        if let expirationDate = entitlement.expirationDate {
-            return Date() < expirationDate
-        }
-        return true
     }
 
     public func getExpirationDate() -> Date? {
@@ -77,6 +82,10 @@ extension SubscriptionStore {
     public func checkTrialEligibility(
         for productId: String
     ) async -> TrialEligibility {
+        guard Purchases.isConfigured else {
+            logger.warning("Purchases is not configured yet. Skipping checkTrialEligibility.")
+            return .unknown
+        }
         guard let product = offerings?.current?.availablePackages
             .first(where: { $0.storeProduct.productIdentifier == productId })?
             .storeProduct else {
