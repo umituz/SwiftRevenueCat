@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "chesskit-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/chesskit-app/chesskit-swift",
+      "state" : {
+        "revision" : "44ef7a1aa9da25bf0a9606a8960591a4dde3fad2",
+        "version" : "0.17.0"
+      }
+    },
+    {
       "identity" : "purchases-ios-spm",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RevenueCat/purchases-ios-spm",
