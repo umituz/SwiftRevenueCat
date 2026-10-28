@@ -9,7 +9,7 @@ final class PurchaseExecutor: PurchaseProviding {
 
     init() {}
 
-    func purchase(_ package: Package) async -> PurchaseResult {
+    func purchase(_ package: Package, entitlementRequired: Bool = true) async -> PurchaseResult {
         guard Purchases.isConfigured else {
             logger.error("Purchases is not configured. Cannot perform purchase.")
             return .failed(.notConfigured)
@@ -27,6 +27,13 @@ final class PurchaseExecutor: PurchaseProviding {
             if result.userCancelled {
                 logger.info("User cancelled purchase")
                 return .cancelled
+            }
+
+            // Consumables (credits, coins, one-time packs) never grant an
+            // entitlement — for those, a completed purchase is the success.
+            if !entitlementRequired {
+                logger.info("Purchase successful (entitlement not required)")
+                return .success
             }
 
             let isEntitled = EntitlementResolver.hasActiveEntitlement(from: result.customerInfo)

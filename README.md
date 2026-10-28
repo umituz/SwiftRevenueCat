@@ -88,7 +88,21 @@ let plan = store.plans.first { $0.isAnnual }
 let result = await store.purchase(plan)
 ```
 
-### 5. Optional: Status Change Callback
+### 5. Purchase a Consumable (credits, coins, one-time packs)
+
+Consumables never grant an entitlement, so success is judged on the
+completed transaction instead:
+
+```swift
+let offerings = try await Purchases.shared.offerings()
+let pack = offerings.current?.availablePackages.first { $0.storeProduct.productIdentifier == "my_credits_100" }
+if let pack {
+    let result = await store.purchaseConsumable(pack)
+    // .success → grant the credits in your app
+}
+```
+
+### 6. Optional: Status Change Callback
 
 ```swift
 SubscriptionStore.shared.onStatusChanged = { isSubscribed, customerInfo in

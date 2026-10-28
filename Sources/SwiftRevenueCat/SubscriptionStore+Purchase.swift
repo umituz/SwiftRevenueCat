@@ -15,7 +15,18 @@ extension SubscriptionStore {
     }
 
     public func purchase(_ package: Package) async -> PurchaseResult {
-        let result = await executor.purchase(package)
+        await purchase(package, entitlementRequired: true)
+    }
+
+    /// Purchase a consumable package (credits, coins, one-time packs).
+    /// A completed, non-cancelled purchase is a success — consumables never
+    /// grant an entitlement, so the entitlement check is skipped.
+    public func purchaseConsumable(_ package: Package) async -> PurchaseResult {
+        await purchase(package, entitlementRequired: false)
+    }
+
+    public func purchase(_ package: Package, entitlementRequired: Bool) async -> PurchaseResult {
+        let result = await executor.purchase(package, entitlementRequired: entitlementRequired)
         await refreshStatus()
         return result
     }

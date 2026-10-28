@@ -14,7 +14,7 @@ public struct Plan: Identifiable, Equatable, Hashable, @unchecked Sendable {
     public let introductoryPrice: String?
     public let offerDescription: String?
 
-    let revenueCatPackage: Package
+    public let revenueCatPackage: Package
 
     public init(
         id: String,
