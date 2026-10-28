@@ -110,6 +110,52 @@ SubscriptionStore.shared.onStatusChanged = { isSubscribed, customerInfo in
 }
 ```
 
+## Thin-App Pattern (recommended)
+
+The store is an `ObservableObject` and exposes display-ready state, so an
+app needs almost no purchase code of its own — configure once, bind, and
+purchase by product identifier. Your app never imports RevenueCat.
+
+```swift
+import SwiftUI
+import SwiftRevenueCat
+
+@main
+struct MyApp: App {
+    init() {
+        // Reads the "RCApiKey" Info.plist entry; one line of setup.
+        SubscriptionStore.shared.configure()
+    }
+}
+
+// Bind any view directly to the store:
+struct StatusView: View {
+    @ObservedObject private var store = SubscriptionStore.shared
+
+    var body: some View {
+        VStack {
+            Text(store.display.statusKind.statusText)   // "Active", "Expires Soon", …
+            Text(store.display.planName)                 // current plan
+            if let days = store.display.daysUntilExpiry {
+                Text("\(days) days left")
+            }
+        }
+    }
+}
+
+// Credit packs / consumables — purchase by product identifier:
+let result = await SubscriptionStore.shared.purchaseConsumable(productIdentifier: "app.credits_100")
+
+// Subscriptions — success requires an active entitlement:
+let result = await SubscriptionStore.shared.purchase(productIdentifier: "app.premium_monthly")
+
+// Price lookup for your own pack UI:
+let price = SubscriptionStore.shared.localizedPrice(forProductIdentifier: "app.credits_100")
+```
+
+What stays app-specific: product metadata (names, credits, badges) and
+entitlement gating — everything StoreKit/RevenueCat lives here.
+
 ## Architecture
 
 ```

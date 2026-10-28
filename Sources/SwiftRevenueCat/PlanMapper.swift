@@ -4,16 +4,26 @@ import RevenueCat
 enum PlanMapper {
 
     static func mapPlans(from offerings: Offerings?) -> [Plan] {
-        guard let packages = offerings?.current?.availablePackages,
-              !packages.isEmpty else {
+        guard let offering = currentOffering(from: offerings),
+              !offering.availablePackages.isEmpty else {
             return []
         }
+        let packages = offering.availablePackages
 
         let costAnalysis = SubscriptionPriceCalculator.analyzeCosts(packages: packages)
 
         return packages.map { package in
             mapPlan(from: package, costAnalysis: costAnalysis)
         }
+    }
+
+    /// Current offering, falling back to the first available offering when
+    /// none is marked current — no hardcoded offering identifiers.
+    private static func currentOffering(from offerings: Offerings?) -> Offering? {
+        if let current = offerings?.current { return current }
+        return offerings?.all.values
+            .sorted { $0.identifier < $1.identifier }
+            .first
     }
 
     // MARK: - Private

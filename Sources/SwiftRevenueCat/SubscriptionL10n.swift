@@ -18,6 +18,38 @@ public enum SubscriptionL10n {
         String(localized: "subscription.tier.free", defaultValue: "Free")
     }
 
+    // MARK: - Status Labels
+
+    public static var statusActive: String {
+        String(localized: "subscription.status.active", defaultValue: "Active")
+    }
+
+    public static var statusExpired: String {
+        String(localized: "subscription.status.expired", defaultValue: "Expired")
+    }
+
+    public static var statusWillExpire: String {
+        String(localized: "subscription.status.will_expire", defaultValue: "Expires Soon")
+    }
+
+    public static var statusCanceled: String {
+        String(localized: "subscription.status.canceled", defaultValue: "Canceled")
+    }
+
+    public static var statusUnknown: String {
+        String(localized: "subscription.status.unknown", defaultValue: "Loading…")
+    }
+
+    // MARK: - Period Names
+
+    public static var periodMonthly: String {
+        String(localized: "subscription.period.monthly", defaultValue: "Monthly")
+    }
+
+    public static var periodYearly: String {
+        String(localized: "subscription.period.yearly", defaultValue: "Yearly")
+    }
+
     // MARK: - Period Labels
 
     public static var once: String {

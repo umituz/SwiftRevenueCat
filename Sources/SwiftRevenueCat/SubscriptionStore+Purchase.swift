@@ -31,6 +31,27 @@ extension SubscriptionStore {
         return result
     }
 
+    /// Purchase by product identifier (e.g. `"com.example.app.premium_monthly"`).
+    /// Success requires an active entitlement — the subscription semantics.
+    public func purchase(productIdentifier: String) async -> PurchaseResult {
+        guard let package = package(matching: productIdentifier) else {
+            logger.error("No package found for product identifier: \(productIdentifier)")
+            return .failed(.productNotAvailable)
+        }
+        return await purchase(package)
+    }
+
+    /// Purchase a consumable (credits, coins, one-time packs) by product
+    /// identifier. A completed, non-cancelled purchase is a success —
+    /// consumables never grant an entitlement.
+    public func purchaseConsumable(productIdentifier: String) async -> PurchaseResult {
+        guard let package = package(matching: productIdentifier) else {
+            logger.error("No package found for product identifier: \(productIdentifier)")
+            return .failed(.productNotAvailable)
+        }
+        return await purchase(package, entitlementRequired: false)
+    }
+
     public func restorePurchases() async -> RestoreResult {
         let result = await executor.restorePurchases()
         await refreshStatus()

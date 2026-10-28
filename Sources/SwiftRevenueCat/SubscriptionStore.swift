@@ -68,7 +68,9 @@ public final class SubscriptionStore: NSObject,
     internal let executor = PurchaseExecutor()
     private var observer: CustomerInfoObserver?
     private var refreshTask: Task<Void, Never>?
-    private var isConfigured = false
+    /// True after a successful `configure(with:)` — the RevenueCat SDK is
+    /// initialized and purchase/restore calls may proceed.
+    public private(set) var isConfigured = false
     internal var config: Configuration?
 
     private override init() {

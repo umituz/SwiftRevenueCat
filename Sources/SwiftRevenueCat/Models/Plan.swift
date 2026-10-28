@@ -44,6 +44,22 @@ public struct Plan: Identifiable, Equatable, Hashable, @unchecked Sendable {
         self.revenueCatPackage = revenueCatPackage
     }
 
+    /// The App Store product identifier (e.g. "com.example.app.premium_monthly").
+    public var productIdentifier: String {
+        revenueCatPackage.storeProduct.productIdentifier
+    }
+
+    /// Localized "per month" price for annual plans (e.g. "$4.99/mo"),
+    /// using the product's currency formatter; nil for other periods.
+    public var localizedPricePerMonth: String? {
+        guard packageType == .annual else { return nil }
+        let perMonth = NSDecimalNumber(decimal: revenueCatPackage.storeProduct.price).doubleValue / 12
+        if let formatter = revenueCatPackage.storeProduct.priceFormatter {
+            return formatter.string(from: perMonth as NSNumber).map { "\($0)/mo" }
+        }
+        return String(format: "$%.2f/mo", perMonth)
+    }
+
     public static func == (lhs: Plan, rhs: Plan) -> Bool {
         lhs.id == rhs.id
             && lhs.packageType == rhs.packageType

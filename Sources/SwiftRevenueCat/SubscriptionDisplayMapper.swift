@@ -17,6 +17,12 @@ enum SubscriptionDisplayMapper {
         )
         let subscribed = entitlement != nil
         let isLifetime = subscribed && entitlement?.expirationDate == nil
+        let expiresAt = entitlement?.expirationDate
+        let willRenew = SubscriptionRenewalResolver.willRenew(
+            isLifetime: isLifetime,
+            entitlement: entitlement
+        )
+        let productIdentifier = entitlement?.productIdentifier
 
         return SubscriptionDisplayModel(
             isSubscribed: subscribed,
@@ -38,14 +44,36 @@ enum SubscriptionDisplayMapper {
                 $0.latestPurchaseDate.map { formatDate($0) }
             },
             storeName: mapStore(entitlement?.store),
-            willRenew: SubscriptionRenewalResolver.willRenew(
-                isLifetime: isLifetime,
-                entitlement: entitlement
-            ),
+            willRenew: willRenew,
             isInBillingRetryPeriod: SubscriptionRenewalResolver.isInBillingRetry(
                 entitlement: entitlement
-            )
+            ),
+            statusKind: resolveStatusKind(
+                subscribed: subscribed,
+                isLifetime: isLifetime,
+                expiresAt: expiresAt,
+                willRenew: willRenew
+            ),
+            periodKind: productIdentifier.map {
+                SubscriptionPeriodKind.from(productIdentifier: $0)
+            } ?? .none,
+            expiresAt: expiresAt,
+            productIdentifier: productIdentifier
         )
+    }
+
+    private static func resolveStatusKind(
+        subscribed: Bool,
+        isLifetime: Bool,
+        expiresAt: Date?,
+        willRenew: Bool
+    ) -> SubscriptionStatusKind {
+        guard subscribed else { return .notSubscribed }
+        if isLifetime { return .active }
+        guard let expiresAt else { return .active }
+        if expiresAt < Date() { return .expired }
+        if !willRenew { return .willExpire }
+        return .active
     }
 
     private static func formatDate(_ date: Date) -> String {

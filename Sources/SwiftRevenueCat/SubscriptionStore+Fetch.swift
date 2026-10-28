@@ -72,6 +72,31 @@ extension SubscriptionStore {
         )
     }
 
+    /// The package for a product identifier, from the current (or first
+    /// available) offering. Exposes the underlying RevenueCat package for
+    /// consumers that need StoreKit-level details.
+    public func package(matching productIdentifier: String) -> Package? {
+        currentOffering()?.availablePackages.first {
+            $0.storeProduct.productIdentifier == productIdentifier
+        }
+    }
+
+    /// Localized price string (e.g. "$9.99") for a product identifier,
+    /// or nil when the store isn't offering that product.
+    public func localizedPrice(forProductIdentifier productIdentifier: String) -> String? {
+        package(matching: productIdentifier)?.localizedPriceString
+    }
+
+    /// Current offering, falling back to the first available offering when
+    /// none is marked current — no hardcoded offering identifiers.
+    public func currentOffering() -> Offering? {
+        guard let offerings else { return nil }
+        if let current = offerings.current { return current }
+        return offerings.all.values
+            .sorted { $0.identifier < $1.identifier }
+            .first
+    }
+
     public func getExpirationDate() -> Date? {
         EntitlementResolver.activeEntitlement(
             from: customerInfo,
